@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="The free apps from A Winter's Night in Limerick, with the first thing to try in each, to take home.">
+  <title>Try Them at Home · AI for All</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <style>
+    /* A take-home sheet: reads on a phone, prints on one A4 page. Built from limerick/apps.js, the same data as the talk. */
+    :root{--ink:#1d2530;--soft:#5b6575;--line:#e2dccd;--paper:#fbf8f1;--card:#fff;--amber:#8a5600;--amber-bg:#fff3d9;--on-amber:#fff;
+      --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;--sans:"Avenir Next","Segoe UI",system-ui,sans-serif}
+    @media screen and (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ink:#f4efe3;--soft:#b9c2d0;--line:#2a3344;--paper:#05080f;--card:#0d1320;--amber:#ffc65a;--amber-bg:rgba(255,198,90,.12);--on-amber:#1a1206}}
+    @media screen{:root[data-theme="dark"]{--ink:#f4efe3;--soft:#b9c2d0;--line:#2a3344;--paper:#05080f;--card:#0d1320;--amber:#ffc65a;--amber-bg:rgba(255,198,90,.12);--on-amber:#1a1206}}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.45 var(--sans)}
+    main{max-width:980px;margin:0 auto;padding:32px 16px 48px}
+    .kicker{margin:0;font:700 13px var(--sans);letter-spacing:.2em;text-transform:uppercase;color:var(--soft)}
+    h1{margin:.2em 0 .15em;font:600 clamp(34px,6vw,52px)/1.05 var(--serif)}
+    h1 em{color:var(--amber)}
+    .lede{margin:0 0 22px;color:var(--soft);font-size:18px}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    article{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;break-inside:avoid}
+    h2{margin:0 0 8px;display:flex;align-items:center;gap:10px;font:700 15px var(--sans);letter-spacing:.04em;color:var(--soft)}
+    h2 b{display:grid;place-items:center;flex:none;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--amber);color:var(--amber);font-size:13px}
+    .try-apps{display:flex;flex-wrap:wrap;gap:6px;margin:0}
+    .app-chip{padding:3px 11px;border-radius:999px;background:var(--amber-bg);border:1.5px solid var(--amber);color:var(--ink);font:700 16px/1.3 var(--sans)}
+    .app-chip.none{background:none;border-style:dashed;color:var(--soft)}
+    .try-first{margin:8px 0 0;font-size:17px}
+    .try-terms{margin:4px 0 0;font:italic 15px/1.35 var(--serif);color:var(--soft)}
+    .bottom{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+    .bottom section{border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+    .bottom h3{margin:0 0 6px;font:600 21px var(--serif)}
+    .bottom ul{margin:0;padding-left:1.1em}.bottom li{margin:3px 0}
+    .fine{margin:16px 0 0;font-size:13px;color:var(--soft)}
+    .qr{display:none;align-items:center;gap:10px;margin:0;text-align:right;font-size:12px;line-height:1.3}.qr img{width:23mm;height:23mm}.qr b{font-size:14px}
+    .go{margin-top:10px;display:inline-flex;align-items:center;gap:8px;padding:7px 14px 7px 11px;border-radius:999px;border:0;background:var(--amber);color:var(--on-amber);font:800 15px var(--sans);cursor:pointer}
+    .go::before{content:"";width:9px;height:10px;background:currentColor;clip-path:polygon(0 0,100% 50%,0 100%)}
+    .print{float:right;margin-top:6px;padding:9px 16px;border-radius:999px;border:1.5px solid var(--amber);background:none;color:var(--ink);font:700 15px var(--sans);cursor:pointer}
+    @media (max-width:680px){.grid,.bottom{grid-template-columns:1fr}.print{float:none;margin:0 0 16px}}
+    @media print{
+      :root{--ink:#000;--soft:#444;--line:#bbb;--paper:#fff;--card:#fff;--amber:#8a5600;--amber-bg:#fff}
+      @page{size:A4;margin:10mm 11mm}
+      body{font-size:14px;line-height:1.3}main{padding:0;max-width:none}
+      h1{font-size:30px}.lede{font-size:14px;margin-bottom:8px}
+      .grid{gap:6px}article{padding:7px 10px}h2{font-size:13px;margin-bottom:4px}
+      .app-chip{font-size:14px;padding:1px 8px}.try-first{font-size:14px;margin-top:4px}.try-terms{font-size:13px;font-style:normal;margin-top:2px}
+      .bottom{gap:6px;margin-top:6px}.bottom section{padding:7px 10px}.bottom h3{font-size:16px;margin-bottom:3px}
+      .print,.go,.how,.screen-only{display:none!important}main{position:relative}.qr{display:flex;position:absolute;top:0;right:0}.lede{max-width:52%}.fine{font-size:11px;margin-top:6px}
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <button class="print" type="button" onclick="print()">Print this sheet</button>
+    <p class="qr"><span>Watch each one done,<br>step by step, on your<br>phone or tablet:<br><b id="site"></b></span><img src="limerick/assets/qr-try.svg" alt=""></p>
+    <p class="kicker">AI for All · A Winter's Night in Limerick</p>
+    <h1>Try them <em>at home</em></h1>
+    <p class="lede">The apps behind tonight's eight windows, and the first thing to try in each. All free to start.<span class="screen-only"> Tap <b>Show me how</b> to watch it done, step by step.</span></p>
+    <div class="grid" id="grid"></div>
+    <div class="bottom">
+      <section><h3>Before you start</h3><ul id="rules"></ul></section>
+      <section><h3>Free help</h3><ul id="help"></ul></section>
+    </div>
+    <p class="fine">These apps are examples, not recommendations; there are others. What you type or photograph goes to the company that runs the app.
+      Details were checked in November 2026 and can change. Dr Boxi Yu · Lero, University of Limerick.</p>
+  </main>
+  <div id="howto" class="how" aria-live="polite"></div>
+  <script type="module">
+    import { TRY, HELP, RULES, SITE, chipsHTML } from './limerick/apps.js';
+    import { PLACES } from './limerick/places.js';
+    import { HOW, HOW_CSS, playHow } from './limerick/howto.js';
+    document.head.append(Object.assign(document.createElement('style'), { textContent: HOW_CSS }));
+    const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    document.getElementById('grid').innerHTML = PLACES.map((p, i) => {
+      const t = TRY[p.id];
+      return `<article><h2><b>${i + 1}</b>${esc(p.label)}</h2><p class="try-apps">${chipsHTML(t)}</p><p class="try-first">${esc(t.first)}</p>`
+        + (t.also ? `<p class="try-terms">${esc(t.also)}</p>` : '') + `<p class="try-terms">${esc(t.terms)}</p>`
+        + (HOW[p.id] ? `<button type="button" class="go" data-how="${p.id}">Show me how</button>` : '') + '</article>';
+    }).join('');
+    document.getElementById('site').textContent = SITE;
+    document.getElementById('rules').innerHTML = RULES.map((r) => `<li>${esc(r)}</li>`).join('');
+    // show me how: the same animated phone as the talk; arrows step, Esc closes, focus returns to the button
+    const how = document.getElementById('howto');
+    let run = null, opener = null;
+    document.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-how]'); if (!b) return;
+      run?.close(); opener = b; main.inert = true;
+      run = playHow(how, b.dataset.how, { auto: 6000, onClose: () => { run = null; main.inert = false; opener?.focus({ preventScroll: true }); } });
+      how.querySelector('[data-a="next"]')?.focus({ preventScroll: true });
+    });
+    const main = document.querySelector('main');
+    how.addEventListener('click', (e) => { if (!e.target.closest('.ph, .how-side')) run?.close(); });   // a click beside the phone closes it
+    addEventListener('keydown', (e) => {
+      if (!run) return;
+      if (e.key === 'Escape') run.close();
+      else if (e.key === 'ArrowRight') run.next();
+      else if (e.key === 'ArrowLeft') run.prev();
+    });
+    document.getElementById('help').innerHTML = HELP.map(([n, d]) => `<li><b>${esc(n)}</b>: ${esc(d)}</li>`).join('');
+  </script>
+</body>
+</html>
