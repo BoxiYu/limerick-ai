@@ -3,8 +3,9 @@
 // blue-white edge glow. Region x 700..1300, z -300..300. Hidden by default; chapter c8 shows it.
 //
 // HANDLE API (used by chapters): obj (group), center (Vector3), feeds (Vector3[] where the grid lines arrive),
-//   show(on: boolean)   toggle visibility of the whole site.
-import { THREE, box } from '../core.js';
+//   show(on: boolean)   toggle visibility of the whole site; haze (the horizon glow sprite);
+//   update(dt)          the vapour rising over the roof plant (holds still under reduced motion).
+import { THREE, box, reduced } from '../core.js';
 
 // Small local seeded PRNG so this module never disturbs the shared city layout (core.rnd).
 function prng(seed) { return () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }; }
@@ -21,9 +22,10 @@ export default {
     const body = new THREE.MeshStandardMaterial({ color: 0x59606c, roughness: 0.75, metalness: 0.15, emissive: 0x1c2532 });
     const roof = new THREE.MeshStandardMaterial({ color: 0x4a515c, roughness: 0.9, emissive: 0x161d28 });
     const housing = new THREE.MeshStandardMaterial({ color: 0x8c939e, roughness: 0.6, metalness: 0.3, emissive: 0x262f3c });
-    const fanMat = new THREE.MeshStandardMaterial({ color: 0x1a1e25, roughness: 0.5 });
-    // Edge glow: a cold blue-white line along the top edges (bright enough to bloom a little, not a lot).
-    const edge = new THREE.MeshBasicMaterial({ color: 0xbfeeff }); edge.color.multiplyScalar(1.6);
+    // fan discs: dark blades in a lighter ring; one texture rotation turns every fan at once (update)
+    const fanMat = new THREE.MeshStandardMaterial({ map: fanTexture(), roughness: 0.5, emissive: 0x0c1118 });
+    // Edge glow: a faint cold line along the roof edges, so the sheds read as grey buildings, not neon outlines.
+    const edge = new THREE.MeshBasicMaterial({ color: 0xbfeeff }); edge.color.multiplyScalar(0.45);
     const ground = new THREE.MeshStandardMaterial({ color: 0x2c333e, roughness: 1 });
 
     // Sheds: [x, z, length (along x), depth (along z)]. Arranged as a loose campus in three clusters.
@@ -38,10 +40,9 @@ export default {
       const s = box(L, H, D, [body, body, roof, roof, body, body]); s.position.set(x, H / 2, z); site.add(s);
       // a plinth / yard around each shed so it sits on its ground rather than floating on the plain
       const yard = box(L + 24, 0.4, D + 22, ground); yard.position.set(x, 0.2, z); site.add(yard);
-      // edge glow strips along the four top edges and a faint line at the base
+      // edge glow strips along the four top edges
       for (const sz of [-1, 1]) {
         const top = box(L, 0.6, 0.6, edge); top.position.set(x, H + 0.1, z + sz * D / 2); site.add(top);
-        const low = box(L, 0.35, 0.35, edge); low.position.set(x, 1.4, z + sz * (D / 2 + 0.2)); site.add(low);
         const side = box(0.6, 0.6, D, edge); side.position.set(x + sz * L / 2, H + 0.1, z); site.add(side);
       }
       // rows of chiller units on the roof
@@ -60,13 +61,35 @@ export default {
     });
     site.add(hI, fI);
 
-    // Ground-level security lights: a few cold points along the perimeter (one InstancedMesh, no PointLights).
+    // Yard lamps: small warm lights on thin dark poles (two InstancedMeshes, no PointLights).
     const pts = [];
     for (let i = 0; i < 40; i++) pts.push([760 + r() * 500, -230 + r() * 480]);
-    const dotMat = new THREE.MeshBasicMaterial({ color: 0xd8f4ff }); dotMat.color.multiplyScalar(2.2);
-    const dots = new THREE.InstancedMesh(new THREE.SphereGeometry(0.9, 6, 4), dotMat, pts.length);
-    pts.forEach(([px, pz], i) => dots.setMatrixAt(i, m.makeTranslation(px, 6, pz)));
-    site.add(dots);
+    const dotMat = new THREE.MeshBasicMaterial({ color: 0xffd9a0 }); dotMat.color.multiplyScalar(1.3);
+    const dots = new THREE.InstancedMesh(new THREE.SphereGeometry(0.7, 6, 4), dotMat, pts.length);
+    const poles = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.2, 0.3, 6, 4), new THREE.MeshStandardMaterial({ color: 0x23272e, roughness: 0.8 }), pts.length);
+    pts.forEach(([px, pz], i) => { dots.setMatrixAt(i, m.makeTranslation(px, 6.2, pz)); poles.setMatrixAt(i, m.makeTranslation(px, 3, pz)); });
+    site.add(dots, poles);
+
+    // Vapour: a few slightly warm wisps rising off the roof plant (cooling on a cold night), each rising, widening and
+    // fading over 6-9 s, then starting again. Under reduced motion they are drawn once, mid-rise, and hold still.
+    const puff = canvasGlow(), wisps = [];
+    for (let i = 0; i < 12; i++) {
+      const near = fans.filter(([x, z]) => z > -110 && x < 1200);   // over the sheds in the close shot
+      const [fx, fz] = near[Math.floor(r() * near.length)];
+      const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: puff, color: 0xfff0dc, transparent: true, opacity: 0, depthWrite: false, fog: false }));
+      s.renderOrder = 2; site.add(s);
+      wisps.push({ s, x: fx, z: fz, life: 6 + r() * 3, t: reduced ? 0.45 + r() * 0.2 : r() });   // t: 0..1 through its rise
+    }
+    const placeWisps = (dt) => {
+      for (const w of wisps) {
+        w.t = (w.t + dt / w.life) % 1;
+        const k = w.t, size = 7 + k * 14;
+        w.s.position.set(w.x + k * 4, H + 5 + k * 25, w.z);
+        w.s.scale.set(size, size * 1.5, 1);   // taller than wide: a plume, not a ball of light
+        w.s.material.opacity = 0.25 * Math.sin(Math.PI * k);   // in and out softly (the texture itself peaks at .6)
+      }
+    };
+    placeWisps(0);
 
     w.add(site, 'dc');
     // A cold haze over the site so it reads as a glow on the horizon from far away (sprite: not part of segmentation).
@@ -86,9 +109,22 @@ export default {
       // where the overhead lines come in (west side of the campus)
       feeds: [new THREE.Vector3(760, 0, -120), new THREE.Vector3(760, 0, 0), new THREE.Vector3(760, 0, 120)],
       show(on) { site.visible = !!on; },
+      update(dt) { if (reduced || !site.visible) return; placeWisps(dt); fanMat.map.rotation -= dt * Math.PI; },   // .5 turn a second
     };
   },
 };
+
+/** A fan seen from above: a light shroud ring round five dark blades (centred, so map.rotation spins it). */
+function fanTexture() {
+  const c = document.createElement('canvas'); c.width = c.height = 64;
+  const g = c.getContext('2d');
+  g.fillStyle = '#6b7380'; g.fillRect(0, 0, 64, 64);
+  g.fillStyle = '#0d1016'; g.beginPath(); g.arc(32, 32, 27, 0, 7); g.fill();
+  g.fillStyle = '#4a525e';
+  for (let k = 0; k < 5; k++) { g.beginPath(); const a = k * 1.2566; g.moveTo(32, 32); g.arc(32, 32, 25, a, a + 0.6); g.fill(); }
+  g.beginPath(); g.arc(32, 32, 5, 0, 7); g.fillStyle = '#6b7380'; g.fill();
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.center.set(0.5, 0.5); return t;
+}
 
 /** Soft horizontal glow texture for the horizon haze. */
 function canvasGlow() {

@@ -2,11 +2,13 @@
 // open the app → tap + → take a photo → type → send → read the answer → you decide.
 // Used by the talk (each window's card, and the board after the finale) and by the take-home page (try.html).
 //
-// The phone is deliberately generic: no logos, no copied screens, only the app's name at the top. The buttons are
+// The phone is deliberately generic: no copied screens, only the app's own icon (apps.js ICONS) and name. The buttons are
 // described the way the apps label them (checked against their help pages, FACTS5.json); every app looks a little
 // different and changes over time, so the overlay says "simplified".
 // Everything is prepared in advance and runs offline; nothing calls a live AI model.
 
+import { STEW, TABLE } from './stew.js';
+import { iconSrc } from './apps.js';
 const A = 'limerick/assets/';
 const h = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -16,24 +18,29 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 // Screen parts: home (the phone's home screen) · buttons [label…] · cam: photo src (+ shutter) · menu (the camera's
 // translated menu) · msgs [[who, text, img?]…] · input: text in the message box (type: true types it) · search: text ·
 // grid: photo names (hits: a regex) · spec: listening picture · found: the name it suggests.
-const you = (t, img) => ['you', t, img], ai = (t) => ['ai', t];
-const KIT = `${A}video/kitchen-start.jpg`;
-const CARD = `${A}video/card-start.jpg`;
+const you = (t, img) => ['you', t, img], ai = (t, img) => ['ai', t, img];
+const KIT = TABLE;                                  // Mary's own photo of her table, from above (assets/stew/table.jpg)
+const CARD = `${A}card/card-photo.jpg`;              // Peggy's own photo of the open card, from above (STILLS.md ## cardphoto)
+// the kitchen's words (Mary's ask is the talk's own bubble; the AI's steps as a chat app would put them)
+const STEW_ASK = 'Mam used to make a Connemara stew. Can you show me how, one step at a time, with pictures?', STEW_NEXT = 'Next step, with a picture, please.';
+const STEW_1 = 'Here\'s a simple Irish lamb stew. Step 1: slice the onions and carrots. Then cut the lamb into big pieces.';
+const STEW_2 = 'Step 2: layer them in the pot with salt and pepper. Just cover with water.';
 const PICS = ['cake', 'dog2', 'wedding', 'garden', 'xmas', 'dog1', 'hurling', 'hills', 'baby', 'dog3', 'caravan', 'swan'];
 
 export const HOW = {
   kitchen: { app: 'ChatGPT', alt: 'Google Gemini and Microsoft Copilot work much the same way.', steps: [
     { cap: 'Open the ChatGPT app.', home: true, tap: 'app' },
     { cap: 'Tap + beside the message box, then Camera.', msgs: [], input: '', tap: 'plus' },
-    { cap: 'Take a photo of the fridge.', cam: KIT, tap: 'shutter' },
-    { cap: 'Type your question. Tell it what else you have.', msgs: [], input: 'What could I make tonight? I have rice too.', type: true, photo: KIT, tap: 'input' },
-    { cap: 'Tap send.', msgs: [], input: 'What could I make tonight? I have rice too.', photo: KIT, tap: 'send' },
-    { cap: 'Read the ideas. It can misread a shelf, so check.', msgs: [you('What could I make tonight? I have rice too.', KIT), ai('You could make leek and potato soup, a cheesy leek omelette, or a leek risotto.')], input: '' },
-    { cap: 'You decide.', msgs: [you('What could I make tonight? I have rice too.', KIT), ai('You could make leek and potato soup, a cheesy leek omelette, or a leek risotto.')], input: '', done: 'Soup it is.' },
+    { cap: 'Take a photo of what you have.', cam: KIT, tap: 'shutter' },
+    { cap: 'Ask for it one step at a time, with pictures.', msgs: [], input: STEW_ASK, type: true, photo: KIT, tap: 'send' },
+    { cap: 'It starts with the first step.', msgs: [you(STEW_ASK), ai(STEW_1, STEW[0].img)], input: '' },
+    { cap: 'Ready? Ask for the next step.', msgs: [you(STEW_ASK), ai(STEW_1, STEW[0].img)], input: STEW_NEXT, type: true, tap: 'send' },
+    { cap: 'Each picture takes a little while, and free plans limit how many.', msgs: [you(STEW_NEXT), ai(STEW_2, STEW[1].img)], input: '' },
+    { cap: 'Every family makes it differently. You decide.', msgs: [you(STEW_NEXT), ai(STEW_2, STEW[1].img)], input: '', done: 'Carrots and all, the way Mam made it.' },
   ] },
   nature: { app: 'Merlin Bird ID', alt: 'Free, from the Cornell Lab of Ornithology.', steps: [
     { cap: 'Open the Merlin Bird ID app.', home: true, tap: 'app' },
-    { cap: 'At home, once: download the Britain and Ireland bird pack.', buttons: ['Britain and Ireland  ↓', 'Download'], tap: 'b1' },
+    { cap: 'At home, once: download the Britain and Ireland bird pack, for pictures of each bird.', buttons: ['Britain and Ireland  ↓', 'Download'], tap: 'b1' },
     { cap: 'Outside, or at an open window: tap Sound ID.', buttons: ['Sound ID', 'Photo ID', 'Step by Step'], tap: 'b0' },
     { cap: 'Tap the microphone and hold up the phone.', spec: true, mic: true, tap: 'mic' },
     { cap: 'Names light up while the bird sings.', spec: true, found: 'European Robin' },
@@ -62,13 +69,13 @@ export const HOW = {
     { cap: 'It finds them. No chat, nothing else to ask.', grid: PICS, search: 'dog beach', hits: /^dog/ },
     { cap: 'You choose the one for the frame.', grid: PICS, search: 'dog beach', hits: /^dog/, done: 'That\'s the one.' },
   ] },
-  card: { app: 'ChatGPT', alt: 'Google Gemini works much the same way. If your eyes are poor, Be My Eyes is free and made for this.', steps: [
+  card: { app: 'ChatGPT', alt: 'Google Gemini works much the same way. If your eyes aren\'t what they were, Be My Eyes is free and made for this.', steps: [
     { cap: 'Open the ChatGPT app.', home: true, tap: 'app' },
     { cap: 'Tap + beside the message box, then Camera.', msgs: [], input: '', tap: 'plus' },
     { cap: 'Take a photo of the card.', cam: CARD, tap: 'shutter' },
     { cap: 'Ask it to read the card to you.', msgs: [], input: 'Can you read my card to me?', type: true, photo: CARD, tap: 'send' },
-    { cap: 'It tells you what the picture shows and what the card says. It can read it out loud too.', msgs: [you('Can you read my card to me?', CARD), ai('A Christmas card with a robin on a holly branch. Inside: "Happy Christmas, Nana! We miss you. Love, Aoife."')], input: '', speak: true },
-    { cap: 'Not sure of a word? Ask about it.', msgs: [you('Can you read my card to me?', CARD), ai('A Christmas card with a robin on a holly branch. Inside: "Happy Christmas, Nana! We miss you. Love, Aoife."')], input: 'What does the handwriting say, word for word?', type: true, tap: 'send' },
+    { cap: 'It tells you what the picture shows and what the card says. It can read it out loud too.', msgs: [you('Can you read my card to me?', CARD), ai('A Christmas card with a robin on a holly branch. Inside: "Happy Christmas, Nana! We miss you, and we can\'t wait to see you. Love, Aoife."')], input: '', speak: true },
+    { cap: 'Not sure of a word? Ask about it.', msgs: [you('Can you read my card to me?', CARD), ai('A Christmas card with a robin on a holly branch. Inside: "Happy Christmas, Nana! We miss you, and we can\'t wait to see you. Love, Aoife."')], input: 'What does the handwriting say, word for word?', type: true, tap: 'send' },
     { cap: 'Handwriting can come out wrong. If it matters, check with family.', msgs: [you('What does the handwriting say, word for word?'), ai('It says: "Happy Christmas, Nana! We miss you, and we can\'t wait to see you. Love, Aoife."')], input: '', done: 'I\'ll ring her.' },
   ] },
   verse: { app: 'Claude', alt: 'ChatGPT, Google Gemini and Microsoft Copilot work much the same way.', steps: [
@@ -88,14 +95,15 @@ const MENU = [['Zuppa del giorno', 'Soup of the day'], ['Risotto ai funghi', 'Mu
 const menuHTML = () => `<p class="ph-mh">Menù</p>${MENU.map(([it, en]) => `<p><s>${esc(it)}</s><b>${esc(en)}</b></p>`).join('')}`;
 function screen(s, app, base) {
   const src = (u) => base + u;
+  const ic = iconSrc(app) ? `<img class="ph-logo" src="${src(iconSrc(app))}" alt="">` : '';   // the app's own icon, if it has one
   const pic = (img) => (img === 'menu' ? `<div class="ph-mini">${menuHTML()}</div>` : `<img src="${src(img)}" alt="">`);
   if (s.home) {
     const icons = HOME.slice(0, 9).concat([app]).concat(HOME.slice(9));
     return `<div class="ph-home"><p class="ph-time">18:00</p><div class="ph-icons">${icons.map((n) => n === app
-      ? `<div class="ph-ic me" data-t="app"><i>${esc(n[0])}</i><span>${esc(n)}</span></div>`
+      ? `<div class="ph-ic me" data-t="app"><i>${ic || esc(n[0])}</i><span>${esc(n)}</span></div>`
       : `<div class="ph-ic"><i></i><span>${esc(n)}</span></div>`).join('')}</div></div>`;
   }
-  let o = `<div class="ph-head">${esc(app)}</div>`;
+  let o = `<div class="ph-head">${ic}${esc(app)}</div>`;
   if (s.search != null) o += `<div class="ph-search" data-t="search"><span>⌕</span><b class="ph-typed">${esc(s.type ? '' : s.search)}</b>${s.search || s.type ? '' : '<em>Search your photos</em>'}</div>`;
   const shutter = '<div class="ph-camb"><div class="ph-shut" data-t="shutter"></div></div>';
   if (s.cam) o += `<div class="ph-cam" style="background-image:url('${src(s.cam)}')"><i class="ph-frame"></i></div>${shutter}`;
@@ -126,10 +134,12 @@ export function playHow(root, id, opts = {}) {
   root.innerHTML = `<div class="how-box" role="dialog" aria-modal="true" aria-label="How to use ${esc(H.app)}">
     <div class="ph"><div class="ph-screen"></div><div class="ph-finger" aria-hidden="true"></div></div>
     <div class="how-side"><p class="how-kicker">Show me how</p><h2>${esc(H.app)}</h2>
+      <p class="how-count"></p>
       <ol class="how-steps">${H.steps.map((s, k) => `<li data-k="${k}"><b>${k + 1}</b><span>${esc(s.cap)}</span></li>`).join('')}</ol>
       <p class="how-alt">${esc(H.alt)} Simplified: every app looks a little different, and they change.</p>
       <p class="how-ctl"><button type="button" data-a="prev">← Back</button><button type="button" data-a="next" class="pri">Next →</button><button type="button" data-a="close">Close ✕</button></p>
     </div></div>`;
+  const count = root.querySelector('.how-count');
   const scr = root.querySelector('.ph-screen'), finger = root.querySelector('.ph-finger'), phone = root.querySelector('.ph');
   root.querySelector('.how-ctl').addEventListener('click', (e) => { const a = e.target.closest('button')?.dataset.a; if (a) api[a](); });
   root.querySelectorAll('.how-steps li').forEach((li) => li.addEventListener('click', () => { manual = true; go(+li.dataset.k); }));
@@ -141,7 +151,10 @@ export function playHow(root, id, opts = {}) {
     i = Math.max(0, Math.min(H.steps.length - 1, k)); const my = ++gen, s = H.steps[i];
     clearTimeout(timer); cancelAnimationFrame(raf);
     root.querySelectorAll('.how-steps li').forEach((li, j) => { li.classList.toggle('on', j === i); li.classList.toggle('past', j < i); });
+    count.textContent = `Step ${i + 1} of ${H.steps.length}`;
     scr.innerHTML = screen(s, H.app, base); scr.classList.remove('in'); void scr.offsetWidth; scr.classList.add('in');
+    const ms = scr.querySelector('.ph-msgs');          // a chat taller than a small phone: its top fades, as a scrolled chat does
+    if (ms) { const cut = () => ms.classList.toggle('cut', ms.scrollHeight > ms.clientHeight + 1); cut(); ms.querySelectorAll('img').forEach((im) => im.addEventListener('load', cut)); new ResizeObserver(cut).observe(ms); }
     finger.classList.remove('show', 'tap');
     if (s.spec) spectrogram(scr.querySelector('.ph-spec'), () => my !== gen || !!s.mic);   // silent until the mic is on
     if (s.menu) { const m = scr.querySelector('.ph-menu'); m.classList.remove('en'); await wait(500); if (my === gen) m.classList.add('en'); }
@@ -203,8 +216,12 @@ export const HOW_CSS = `
 .ph-ic{display:flex;flex-direction:column;align-items:center;gap:.35em;font-size:.82em;opacity:.75;text-align:center}
 .ph-ic i{width:3.6em;height:3.6em;border-radius:1em;background:rgba(255,255,255,.18)}
 .ph-ic.me{opacity:1;font-weight:800}
+.ph-ic.me i:has(.ph-logo){overflow:hidden;background:none;border-radius:22%}.ph-ic.me .ph-logo{width:100%;height:100%;display:block;object-fit:cover}
+.ph-head{display:flex;align-items:center;justify-content:center;gap:.45em}
+.ph-head .ph-logo{flex:none;width:1.35em;height:1.35em;border-radius:22%;border:1px solid #e3ddcf}
 .ph-ic.me i{display:grid;place-items:center;font:800 1.7em var(--h-sans);font-style:normal;width:2.1em;height:2.1em;border-radius:.6em;background:#fff;color:#1d2530;box-shadow:0 0 0 3px var(--h-amber),0 0 24px rgba(255,198,90,.7)}
 .ph-msgs{flex:1;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;gap:.6em;padding:.8em}
+.ph-msgs.cut{-webkit-mask-image:linear-gradient(transparent .3em,#000 2.4em);mask-image:linear-gradient(transparent .3em,#000 2.4em)}
 .ph-empty{margin:auto;color:#6b7383;font-size:1.25em}
 .ph-msg{max-width:86%;border-radius:1em;padding:.55em .8em}
 .ph-msg p{margin:0}
@@ -241,12 +258,12 @@ export const HOW_CSS = `
 .ph-listen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1em;padding:1em;background:#0d1524;color:#fff}
 .ph-spec{width:100%;border-radius:.6em;background:#081018}
 .ph-wait{margin:0;color:var(--h-cyan)}
-.ph-found{padding:.6em 1.1em;border-radius:.8em;background:var(--h-amber);color:#1a1206;font-weight:800;font-size:1.2em;animation:phin .5s ease-out}
+.ph-found{padding:.6em 1.1em;border-radius:.8em;background:var(--h-cyan);color:#04131a;font-weight:800;font-size:1.2em;animation:phin .5s ease-out}
 .ph-mic{display:grid;place-items:center;width:3.4em;height:3.4em;border-radius:50%;background:#fff;color:#d33;font-size:1.3em}
 .ph-mic.on{background:#d33;color:#fff}
 .ph-grid{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:3px;align-content:start;padding:3px}
 .ph-grid img{width:100%;aspect-ratio:1;object-fit:cover;transition:all .8s}
-.ph-grid.found img{opacity:.15;filter:grayscale(1)}.ph-grid.found img.hit{opacity:1;filter:none;box-shadow:0 0 0 3px var(--h-amber)}
+.ph-grid.found img{opacity:.15;filter:grayscale(1)}.ph-grid.found img.hit{opacity:1;filter:none;box-shadow:0 0 0 3px var(--h-cyan)}   /* the machine's finds: cyan (amber is the person's pick) */
 .ph-done{position:absolute;left:8%;right:8%;top:5.2em;padding:.7em 1em;border-radius:1em;background:var(--h-amber);color:#1a1206;font:800 1.1em/1.3 var(--h-sans);text-align:center;
   box-shadow:0 10px 30px rgba(0,0,0,.35);animation:phin .5s ease-out .3s both}
 .pressed{filter:brightness(.88)}
@@ -269,7 +286,28 @@ export const HOW_CSS = `
 .how-ctl button{padding:.55em 1.1em;border-radius:999px;border:1.5px solid rgba(244,239,227,.35);background:none;color:var(--h-ink);font:700 clamp(15px,1vw,19px) var(--h-sans);cursor:pointer}
 .how-ctl button.pri{background:var(--h-amber);border-color:var(--h-amber);color:#1a1206}
 .how-ctl button:focus-visible{outline:2px solid var(--h-amber);outline-offset:3px}
-@media (max-width:760px){.how{overflow:auto;place-items:start center;padding:12px 16px 0}.how-box{flex-direction:column;gap:14px}.ph{height:min(56vh,520px)}.how-side h2{font-size:30px;margin-bottom:.3em}.how-steps li{font-size:16px}
-  .how-ctl{position:sticky;bottom:0;margin:0;padding:10px 0 14px;background:rgba(3,6,14,.96)}}
-@media (prefers-reduced-motion:reduce){.ph-screen.in>*,.ph-found,.ph-done,.ph-speak{animation:none}.ph-finger{transition:opacity .2s}}
+.how-count{display:none;margin:0 0 .35em;font:700 13px var(--h-sans);letter-spacing:.14em;text-transform:uppercase;color:var(--h-soft)}
+@media (pointer:coarse){.how-ctl button{min-height:46px}}
+/* small screens: only the step being shown, so its words sit right by the phone; a shorter home screen so every app fits */
+@media (max-width:760px),(max-height:560px){.how-steps li:not(.on){display:none}.how-count{display:block}.how-steps li.on{cursor:default}
+  .ph-home{padding-top:2.2em}.ph-time{font-size:2.6em;margin-bottom:.8em}.ph-icons{gap:.9em .6em}}
+/* upright phones: the buttons straight under the step, the app note after them (never under the bar); on a short screen a
+   shorter phone, so the longest step and its buttons fit (268px: the words under the phone) */
+@media (max-width:760px){.how{overflow:auto;place-items:start center;padding:12px 16px 0}.how-box{flex-direction:column;gap:14px}.ph{height:min(60vh,540px,100vh - 268px)}
+  .ph-screen{font-size:clamp(11px,1.9vh,17px)}.how-side h2{font-size:30px;margin-bottom:.3em}.how-steps li{font-size:17px}
+  .how-ctl{position:sticky;bottom:0;margin:0;padding:10px 0 14px;background:rgba(3,6,14,.96)}
+  .how-side{display:flex;flex-direction:column}.how-alt{order:1;margin-bottom:14px}}
+/* the shortest upright phones (320×568): a tighter heading and bar under the phone */
+@media (max-width:760px) and (max-height:620px){.how-box{gap:10px}.how-side h2{font-size:26px;margin:.1em 0 .25em}.how-ctl{padding:8px 0}}
+/* a phone drawn about 300px tall (those, and small phones on their side): a tighter home screen and chat, so all the apps,
+   the latest message and most of the one before it still fit, the 'you decide' pill covers no more than it did on the
+   taller phone, and the menu photo stays inside the camera view */
+@media (max-width:760px) and (max-height:620px),(max-height:370px){.ph-home{padding:1.4em 1.1em .6em}.ph-time{font-size:2.2em;margin-bottom:.5em}
+  .ph-icons{gap:.55em .6em}.ph-ic i{width:3.3em;height:3.3em}.ph-ic.me i{width:1.95em;height:1.95em}.ph-head{padding:1.8em 1em .5em}.ph-msgs{padding:.5em .8em;gap:.45em}
+  .ph-msg{padding:.45em .7em}.ph-msg img,.ph-mini{max-height:6em}.ph-in{padding:.5em .6em 1em}.ph-below{padding-bottom:1em}.ph-done{top:3.75em;padding:.4em .75em}
+  .ph-camb{padding:.7em 0 1.2em}.ph-menu{width:84%;padding:.8em .7em}.ph-menu p{margin-bottom:.6em}}
+/* a phone on its side (a small one too): phone and words side by side, everything on one screen */
+@media (max-height:560px) and (min-aspect-ratio:1/1){.how{overflow:auto;place-items:center;padding:2vh 3vw}.how-box{flex-direction:row;gap:24px}.ph{height:94vh}.ph-screen{font-size:clamp(11px,2.6vh,15px)}
+  .how-side h2{font-size:28px;margin:.05em 0 .3em}.how-steps li{font-size:17px}.how-alt{order:0;font-size:14px;margin:.7em 0 0}.how-ctl{position:static;margin-top:.8em;padding:0;background:none}}
+@media (prefers-reduced-motion:reduce){.ph-screen.in>*,.ph-found,.ph-done,.ph-speak{animation:none}.ph-finger{transition:opacity .2s}.ph-grid img{transition:none}}
 `;

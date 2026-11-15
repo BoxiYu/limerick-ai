@@ -17,9 +17,10 @@ export const WIN = { w: 7.2, h: 4.05, y: 3.5 };   // a 16:9 window, the same sha
 export const PLACES = [
   {
     id: 'kitchen', bank: 'e', z: -98, kind: 'render', label: 'Kitchen',
-    kicker: 'Six o\'clock · the kitchen',
-    line: 'Show it what\'s in the fridge. It suggests what to cook.',
+    kicker: 'Five o\'clock · the kitchen',
+    line: 'Show it what you have. It shows you how, one step at a time.',
     src: 'Illustrative scene · any AI assistant that takes photos',
+    focus: '41% 45%',   // where a cropped screen centres the still: an upright phone keeps her face, her phone and Mam's pot
   },
   {
     id: 'nature', bank: 'w', z: -128, kind: 'render', label: 'The robin',

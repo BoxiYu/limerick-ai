@@ -10,7 +10,7 @@ To re-record one clip, edit its text here and run `tools/voice.sh <id>`.
 A winter's night in Limerick, a few weeks before Christmas. Behind these windows, people are doing ordinary things: cooking, learning, remembering, keeping in touch. And quietly, AI is helping. Let's look inside.
 
 ## kitchen
-Six o'clock. Leeks, potatoes, a few eggs, a bit of cheese, and no plan. Mary takes a photo of the fridge and asks what she could make. She knows her own kitchen. She just wants an idea.
+Five o'clock, and dark already. Mary has lamb from the butcher, and the big old pot that was her mother's. Her mother never wrote the recipe down. So Mary takes a photo, and asks.
 
 ## nature
 Seven o'clock. Something is singing out in the dark, under the light by the door. Tom opens the window, and holds up his phone.
@@ -34,13 +34,13 @@ Half nine. A Christmas card for her daughter in Australia has to go in the post 
 Last thing, the forecast. Behind it, Europe's weather scientists now run an AI forecast alongside their usual one, and the forecasters still decide what to tell us. Tomorrow, they say, looks bright.
 
 ## journey0
-One last look. When Mary asked about her fridge, where did her question go?
+One last look. When Mary asked about her stew, where did her question go?
 
 ## journey1
 It left her phone as a radio signal and reached a phone mast. From there it travelled as pulses of light, through fibre-optic cables under streets and fields.
 
 ## journey2
-It arrived at a data centre: a big, quiet building full of computers, often far from where we live.
+It arrived at a busy data centre, often far from where we live, its computers and cooling fans humming day and night.
 
 ## journey3
 Inside are special chips. Each one does a huge number of small sums, all at once. That's how it works out an answer in a second or two.
@@ -49,7 +49,7 @@ Inside are special chips. Each one does a huge number of small sums, all at once
 All of it runs on electricity, from wind farms and power stations, through the grid. Data centres use a large share of Ireland's electricity. That is a real cost, and it's worth knowing.
 
 ## journey5
-And then the answer comes all the way back, to a kitchen in Limerick. Leek and potato soup.
+And then the answer comes all the way back, to a kitchen in Limerick. A stew, one step at a time.
 
 ## finale
 Eight windows, one winter's night. None of it is magic, and none of it replaces us. It helps us cook, learn, remember, and stay close. Let it help. But you decide.

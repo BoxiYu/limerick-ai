@@ -2,8 +2,8 @@
 // Coordinates: the Shannon runs north (-z) to south (+z) along x = 0, banks at |x| > RIVER.
 // East bank (+x): King's Island (castle, cathedral) to the north, the library and Georgian city to the south.
 // West bank (-x): Thomond Bridge's west end (Treaty Stone), lower houses and trees. 1 unit ≈ 2 m. Stylised, not to scale.
-import { THREE, scene, rnd, V, box, canvasTex, M, tag, CLS } from './core.js';
-import { prng, KINDS, Sink, houseSpec, emitHouse, glow as cityGlow } from './city.js';
+import { THREE, scene, rnd, V, box, canvasTex, M, tag, CLS, reduced } from './core.js';
+import { prng, KINDS, Sink, houseSpec, emitHouse, glow as cityGlow, stackTops } from './city.js';
 import LANDMARKS from './landmarks/index.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
@@ -13,7 +13,7 @@ export const world = {
   RIVER, scene, lamps: [], swans: [], swanSprites: [], people: [], lm: {}, detect: [], reserved: [],
   cityGlow,                                  // { value }: the city's window glow (1 = as built); a chapter may lower it
   onUpdate(fn) { updaters.push(fn); },
-  update(dt, T, camera) { for (const f of updaters) f(dt, T, camera); },
+  update(dt, T, camera) { if (reduced) dt = T = 0; for (const f of updaters) f(dt, T, camera); },   // reduced motion: time stands still
 };
 const w = world;
 w.add = (obj, cls) => { if (cls) tag(obj, cls); scene.add(obj); return obj; };
@@ -35,11 +35,18 @@ w.stars = (() => {
   const p = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xcfe0ff, size: 2.2, sizeAttenuation: false, fog: false, transparent: true, opacity: 0.8 }));
   scene.add(p); return p;
 })();
+// The moon: a small ivory disc in a faint cool halo, kept soft (DESIGN §4: never the hero). It rides with the camera
+// (so it looks infinitely far, like a real moon; 700 out, nearer than the far ground, which would clip the halo) a
+// little below eye level, low over the hazy north-east horizon: the overview, title and finale cameras look down at
+// the city and see it top right, clear of the title and the labels. Low shots see nothing of it.
 w.moon = new THREE.Sprite(new THREE.SpriteMaterial({ map: canvasTex(256, 256, (g) => {
-  const gr = g.createRadialGradient(128, 128, 20, 128, 128, 128); gr.addColorStop(0, 'rgba(255,250,235,1)'); gr.addColorStop(0.28, 'rgba(255,248,230,1)'); gr.addColorStop(0.33, 'rgba(200,215,255,.35)'); gr.addColorStop(1, 'rgba(120,150,255,0)');
+  const gr = g.createRadialGradient(128, 128, 0, 128, 128, 128);
+  gr.addColorStop(0, 'rgba(236,230,214,1)'); gr.addColorStop(0.12, 'rgba(226,221,206,1)'); gr.addColorStop(0.145, 'rgba(190,204,236,.2)');
+  gr.addColorStop(0.4, 'rgba(150,172,228,.06)'); gr.addColorStop(1, 'rgba(120,150,230,0)');
   g.fillStyle = gr; g.fillRect(0, 0, 256, 256);
 }), fog: false, depthWrite: false }));
-w.moon.position.set(-900, 1100, -2000); w.moon.scale.set(420, 420, 1); scene.add(w.moon);
+const MOON_DIR = V(0.779, -0.077, -0.623).normalize();
+w.moon.scale.set(125, 125, 1); w.moon.position.copy(MOON_DIR).multiplyScalar(700); scene.add(w.moon);
 
 // ---------- light ----------
 scene.add(new THREE.HemisphereLight(0x5b78b8, 0x10131a, 0.55));
@@ -259,6 +266,7 @@ for (const L of LANDMARKS) {
 // Island); on the west bank lower, broken rows of rendered and limestone houses among trees. The fill builds only on
 // ground the landmarks left free. Keep clear the ground the cameras stand on and look across (see SHOTS in chapters).
 w.reserve(-75, -165, 90, 130); w.reserve(-55, 60, 50, 50); w.reserve(-90, 280, 70, 70); w.reserve(-75, 125, 60, 60);
+const cityStacks = stackTops.length;              // chimneys from here on belong to the city fill
 {
   // one PRNG per bank, so a change on one bank never reshuffles the other
   let CR = prng(1651);                                           // west bank (the first siege)
@@ -343,17 +351,34 @@ for (let z = -300; z < 520; z += 20) { if (w.free(RIVER + 4, z, 1, 1)) w.lamp(RI
 for (const [x, z, r] of [[-6, -168, 0.4], [4, -160, 2.6], [-12, 80, 1.2], [10, 64, -0.8], [-3, 150, 3.0]]) w.swan(x, z, r);
 w.detect.push({ obj: w.swans[0], label: 'swan 0.91' }, { obj: w.swans[1], label: 'swan 0.88' }, { obj: w.lamps[2], label: 'street lamp 0.81' }, { obj: w.lamps[3], label: 'street lamp 0.79' });
 
-// ---------- snow ----------
-const SNOW = 2600;
+// ---------- snow, in depth: a wide field of small slow flakes, and a few larger, quicker ones close to the camera ----------
+const SNOW = 2600, NEAR = 140, NB = 45;                    // NB: half-size of the box of near flakes around the camera
 const snowGeo = new THREE.BufferGeometry();
 const snowPos = new Float32Array(SNOW * 3);
 for (let i = 0; i < SNOW; i++) snowPos.set([(rnd() - 0.5) * 360, rnd() * 160, (rnd() - 0.5) * 360], i * 3);
 snowGeo.setAttribute('position', new THREE.BufferAttribute(snowPos, 3));
 // Soft round flakes: a radial-gradient sprite, so flakes near the camera read as soft blurs, not hard squares.
 const flake = canvasTex(64, 64, (g) => { const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.35, 'rgba(255,255,255,.75)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); });
-w.snow = new THREE.Points(snowGeo, new THREE.PointsMaterial({ color: 0xffffff, map: flake, size: 0.7, transparent: true, opacity: 0.5, depthWrite: false }));
+// A flake never grows past about 3% of the screen height: one right at the lens stays a soft dot, not a blot.
+// With USE_ASIZE (the smoke below) each point is scaled by its aSize instead, uncapped.
+const pointsMat = (o) => Object.assign(new THREE.PointsMaterial({ transparent: true, depthWrite: false, ...o }), {
+  onBeforeCompile(sh) {
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\n#ifdef USE_ASIZE\nattribute float aSize;\n#endif')
+      .replace('#include <worldpos_vertex>', '#ifdef USE_ASIZE\ngl_PointSize *= aSize;\n#else\ngl_PointSize = min(gl_PointSize, scale * 0.03);\n#endif\n#include <worldpos_vertex>');
+  },
+});
+w.snow = new THREE.Points(snowGeo, pointsMat({ color: 0xffffff, map: flake, size: 0.5, opacity: 0.5 }));
 scene.add(w.snow);
+const nearGeo = new THREE.BufferGeometry(), nearPos = new Float32Array(NEAR * 3);
+for (let i = 0; i < NEAR; i++) nearPos.set([(rnd() - 0.5) * 2 * NB, (rnd() - 0.5) * 2 * NB, (rnd() - 0.5) * 2 * NB], i * 3);
+nearGeo.setAttribute('position', new THREE.BufferAttribute(nearPos, 3));
+const nearSnow = new THREE.Points(nearGeo, pointsMat({ color: 0xffffff, map: flake, size: 0.95, opacity: 0.5 }));
+nearSnow.frustumCulled = false; w.snow.add(nearSnow);    // a child: whatever hides the snow hides these too
+const wrap = (d) => ((d + NB) % (2 * NB) + 2 * NB) % (2 * NB) - NB;
+let nearAt = '';
 
+// Reduced motion (time stands still, above): the snow field only follows the camera when it cuts to a new place.
+let snowX = 0, snowZ = 0;
 w.onUpdate((dt, T, camera) => {
   w.waterMat.uniforms.uTime.value = T;
   updateSwanVisibility();
@@ -365,14 +390,88 @@ w.onUpdate((dt, T, camera) => {
     reflection.position.set(s.position.x, -1.6, s.position.z);
   }
   for (let i = 0; i < personSil.length; i++) { const p = personSil[i]; p.rotation.y = Math.atan2(camera.position.x - p.position.x, camera.position.z - p.position.z); }
+  w.moon.position.copy(camera.position).addScaledVector(MOON_DIR, 700);
   if (!w.snow.visible) return;
+  // near flakes: fall and drift, and stay in a box around the camera (a cut wraps them to the new place at once)
+  const q = nearGeo.attributes.position.array, at = camera.position, key = `${at.x},${at.y},${at.z}`;
+  if (dt || key !== nearAt) {
+    for (let j = 0, i = 0; j < NEAR * 3; j += 3, i++) {
+      q[j + 1] -= dt * (9 + (i % 5)); q[j] += Math.sin(T * 0.7 + i) * dt * 1.2;
+      q[j] = at.x + wrap(q[j] - at.x); q[j + 1] = at.y + wrap(q[j + 1] - at.y); q[j + 2] = at.z + wrap(q[j + 2] - at.z);
+    }
+    nearAt = key; nearGeo.attributes.position.needsUpdate = true;
+  }
   const p = snowGeo.attributes.position.array, cx = camera.position.x, cz = camera.position.z, cy = Math.min(camera.position.y, 120);
+  if (reduced) {
+    const dx = cx - snowX, dz = cz - snowZ; if (Math.abs(dx) < 90 && Math.abs(dz) < 90) return;
+    for (let j = 0; j < SNOW * 3; j += 3) { p[j] += dx; p[j + 2] += dz; }
+    snowX = cx; snowZ = cz; snowGeo.attributes.position.needsUpdate = true; return;
+  }
   for (let i = 0; i < SNOW; i++) {
     const j = i * 3;
-    p[j + 1] -= dt * (5 + (i % 7));
+    p[j + 1] -= dt * (4 + (i % 5));
     p[j] += Math.sin(T + i) * dt * 0.8;
     if (p[j + 1] < cy - 80 || p[j + 1] < -2) { p[j + 1] = cy + 60 + (i % 40); p[j] = cx + ((i * 37) % 360) - 180; p[j + 2] = cz + ((i * 91) % 360) - 180; }
   }
   snowGeo.attributes.position.needsUpdate = true;
+});
+
+// ---------- winter air: smoke from a few chimneys, and a thin mist low on the Shannon (soft, never the hero) ----------
+// Both are drawn from time alone, so under reduced motion (time stands still) they hold still, mid-rise.
+const puff = canvasTex(64, 64, (g) => { const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,.6)'); gr.addColorStop(0.5, 'rgba(255,255,255,.3)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); });
+// ten chimneys of the city fill, spread over the part of both banks the overview sees (the same ten on every load)
+const smokers = (() => {
+  const seen = ([x, , z]) => (x > 45 && x < 300 && z > -90 && z < 180) || (x < -45 && x > -160 && z > -250 && z < 220);
+  const R = prng(1922), all = stackTops.slice(cityStacks).filter(seen), out = [];
+  for (let t = 0; t < 500 && out.length < 10; t++) { const c = all[(R() * all.length) | 0]; if (c && out.every((o) => Math.hypot(o[0] - c[0], o[2] - c[2]) > 55)) out.push(c); }
+  return out;
+})();
+const PUFFS = 7, NS = smokers.length * PUFFS, smokeGeo = new THREE.BufferGeometry(), smokeCol = new THREE.Color(0xcfc4b4);
+smokeGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(NS * 3), 3));
+smokeGeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(NS * 4), 4));
+smokeGeo.setAttribute('aSize', new THREE.BufferAttribute(new Float32Array(NS), 1));
+w.smoke = new THREE.Points(smokeGeo, pointsMat({ map: puff, size: 1, vertexColors: true, fog: true }));
+w.smoke.material.defines = { USE_ASIZE: '' }; w.smoke.frustumCulled = false; scene.add(w.smoke);
+// mist: two flat sheets of slow noise between the quay walls, thinning towards the banks and the ends of the town
+w.mist = new THREE.Group(); scene.add(w.mist);
+const mistMat = new THREE.ShaderMaterial({
+  fog: true, transparent: true, depthWrite: false,
+  uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uTime: { value: 0 } }]),
+  vertexShader: `#include <common>
+    #include <fog_pars_vertex>
+    varying vec3 wp; void main(){ vec4 w = modelMatrix*vec4(position,1.); wp = w.xyz; vec4 mvPosition = viewMatrix*w; gl_Position = projectionMatrix*mvPosition;
+    #include <fog_vertex>
+    }`,
+  fragmentShader: `#include <common>
+    #include <fog_pars_fragment>
+    uniform float uTime; varying vec3 wp;
+    float n(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f); float a=fract(sin(dot(i,vec2(127.1,311.7)))*43758.5), b=fract(sin(dot(i+vec2(1,0),vec2(127.1,311.7)))*43758.5), c=fract(sin(dot(i+vec2(0,1),vec2(127.1,311.7)))*43758.5), d=fract(sin(dot(i+vec2(1,1),vec2(127.1,311.7)))*43758.5); return mix(mix(a,b,f.x),mix(c,d,f.x),f.y); }
+    void main(){
+      vec2 q = vec2(wp.x*0.08 + uTime*0.015 + wp.y*3., wp.z*0.015 - uTime*0.01);
+      float m = n(q*2.)*0.65 + n(q*5. + 7.)*0.35;
+      float a = smoothstep(0.45, 0.9, m) * (1. - smoothstep(${(RIVER - 12).toFixed(1)}, ${(RIVER + 2).toFixed(1)}, abs(wp.x)))
+        * smoothstep(-400., -280., wp.z) * (1. - smoothstep(480., 600., wp.z)) * 0.12;
+      #ifdef FOG_EXP2
+      a *= exp(-fogDensity*fogDensity*vFogDepth*vFogDepth);      // fades into the night fog with distance
+      #endif
+      gl_FragColor = vec4(0.46, 0.52, 0.62, a);
+    }`,
+});
+for (const y of [-0.7, 0.5]) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(RIVER * 2 + 6, 1000), mistMat);
+  m.rotation.x = -Math.PI / 2; m.position.set(0, y, 100); w.mist.add(m);
+}
+w.onUpdate((dt, T) => {
+  mistMat.uniforms.uTime.value = T;
+  const pos = smokeGeo.attributes.position.array, col = smokeGeo.attributes.color.array, size = smokeGeo.attributes.aSize.array;
+  smokers.forEach(([x, y, z], c) => {
+    for (let k = 0; k < PUFFS; k++) {
+      const i = c * PUFFS + k, life = (T / 15 + k / PUFFS + c * 0.37) % 1;      // one puff takes 15 s to rise and fade
+      pos.set([x + life * life * 7 + Math.sin(T * 0.4 + i) * 0.6 * life, y + life * 15, z + life * 2], i * 3);
+      col.set([smokeCol.r, smokeCol.g, smokeCol.b, Math.sin(Math.PI * life) ** 1.5 * 0.13], i * 4);
+      size[i] = 4 + life * 15;
+    }
+  });
+  smokeGeo.attributes.position.needsUpdate = smokeGeo.attributes.color.needsUpdate = smokeGeo.attributes.aSize.needsUpdate = true;
 });
 export { CLS };

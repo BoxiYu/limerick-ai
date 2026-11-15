@@ -1,0 +1,344 @@
+{
+"card": [
+[
+0.36,
+3.98,
+"Nine o'clock. A card has come for Peggy from her granddaughter,"
+],
+[
+4.46,
+5.84,
+"and her eyes aren't what they were."
+],
+[
+6.5,
+8.3,
+"She takes a photo of it with a free app."
+]
+],
+"finale": [
+[
+0.34,
+2.56,
+"Eight windows, one winter's night."
+],
+[
+3.26,
+6.1,
+"None of it is magic, and none of it replaces us."
+],
+[
+6.7,
+10.3,
+"It helps us cook, learn, remember, and stay close."
+],
+[
+10.92,
+11.54,
+"Let it help."
+],
+[
+12.12,
+12.78,
+"But you decide."
+]
+],
+"intro": [
+[
+0.32,
+3.74,
+"A winter's night in Limerick, a few weeks before Christmas."
+],
+[
+4.46,
+7.28,
+"Behind these windows, people are doing ordinary things:"
+],
+[
+7.82,
+11.1,
+"cooking, learning, remembering, keeping in touch."
+],
+[
+11.82,
+13.92,
+"And quietly, AI is helping."
+],
+[
+14.56,
+15.28,
+"Let's look inside."
+]
+],
+"journey0": [
+[
+0.38,
+1.26,
+"One last look."
+],
+[
+1.9,
+5.14,
+"When Mary asked about her stew, where did her question go?"
+]
+],
+"journey1": [
+[
+0.32,
+3.7,
+"It left her phone as a radio signal and reached a phone mast."
+],
+[
+4.3,
+6.64,
+"From there it travelled as pulses of light,"
+],
+[
+7.02,
+9.88,
+"through fibre-optic cables under streets and fields."
+]
+],
+"journey2": [
+[
+0.34,
+2.22,
+"It arrived at a busy data centre,"
+],
+[
+2.7,
+4.18,
+"often far from where we live,"
+],
+[
+4.68,
+7.88,
+"its computers and cooling fans humming day and night."
+]
+],
+"journey3": [
+[
+0.34,
+1.98,
+"Inside are special chips."
+],
+[
+2.56,
+4.94,
+"Each one does a huge number of small sums,"
+],
+[
+5.22,
+5.86,
+"all at once."
+],
+[
+6.5,
+8.8,
+"That's how it works out an answer in a second or two."
+]
+],
+"journey4": [
+[
+0.36,
+1.92,
+"All of it runs on electricity,"
+],
+[
+2.42,
+5.18,
+"from wind farms and power stations, through the grid."
+],
+[
+5.84,
+8.7,
+"Data centres use a large share of Ireland's electricity."
+],
+[
+9.3,
+11.66,
+"That is a real cost, and it's worth knowing."
+]
+],
+"journey5": [
+[
+0.32,
+2.54,
+"And then the answer comes all the way back,"
+],
+[
+2.98,
+4.16,
+"to a kitchen in Limerick."
+],
+[
+4.64,
+6.7,
+"A stew, one step at a time."
+]
+],
+"kitchen": [
+[
+0.34,
+2.46,
+"Five o'clock, and dark already."
+],
+[
+3.16,
+4.64,
+"Mary has lamb from the butcher,"
+],
+[
+5.1,
+7.02,
+"and the big old pot that was her mother's."
+],
+[
+7.66,
+9.44,
+"Her mother never wrote the recipe down."
+],
+[
+9.98,
+12.04,
+"So Mary takes a photo, and asks."
+]
+],
+"library": [
+[
+0.32,
+2.18,
+"Half seven, at the library."
+],
+[
+2.86,
+4.32,
+"Anne is learning something new."
+],
+[
+4.84,
+7.32,
+"She asks it a question, then asks again,"
+],
+[
+7.7,
+9.16,
+"as many times as she needs."
+],
+[
+9.74,
+10.76,
+"It never sighs."
+],
+[
+11.3,
+14.58,
+"It sounds very sure of itself, and it isn't always right,"
+],
+[
+15.02,
+17.32,
+"so for the things that matter, she checks."
+]
+],
+"nature": [
+[
+0.4,
+3.78,
+"Seven o'clock. Something is singing out in the dark,"
+],
+[
+4.24,
+5.66,
+"under the light by the door."
+],
+[
+6.42,
+9.04,
+"Tom opens the window, and holds up his phone."
+]
+],
+"photos": [
+[
+0.32,
+1.96,
+"Half eight, by the fire."
+],
+[
+2.62,
+6.08,
+"Thousands of photos on Seán's phone, and his mother wants one:"
+],
+[
+6.54,
+8.58,
+"the dog, years ago, at the sea."
+],
+[
+9.18,
+10.3,
+"He types two words."
+]
+],
+"travel": [
+[
+0.34,
+3.9,
+"Eight o'clock. John and Kathleen are going to Italy in the spring,"
+],
+[
+4.24,
+5.18,
+"flying from Shannon."
+],
+[
+5.76,
+9.26,
+"Tonight they're practising at home, with the guidebook and a phone."
+]
+],
+"verse": [
+[
+0.32,
+1.02,
+"Half nine."
+],
+[
+1.62,
+5.48,
+"A Christmas card for her daughter in Australia has to go in the post this week,"
+],
+[
+5.9,
+7.0,
+"and the words won't come."
+],
+[
+7.7,
+10.74,
+"Breda asks for a few lines, and then she asks again."
+]
+],
+"weather": [
+[
+0.34,
+2.06,
+"Last thing, the forecast."
+],
+[
+2.68,
+7.88,
+"Behind it, Europe's weather scientists now run an AI forecast alongside their usual one,"
+],
+[
+8.4,
+10.72,
+"and the forecasters still decide what to tell us."
+],
+[
+11.26,
+13.06,
+"Tomorrow, they say, looks bright."
+]
+]
+}

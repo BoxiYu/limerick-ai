@@ -34,6 +34,8 @@ export const KINDS = {
 };
 /** Overall window glow of the whole city (a shared uniform): a chapter can lower it when its hero is a landmark (DESIGN §4). */
 export const glow = { value: 1.0 };
+/** World [x, y, z] of every chimney pot top, in build order (world.js lets a few of them smoke). */
+export const stackTops = [];
 const amb = { value: 0.3 };       // the painting's own night colour, so walls read away from the moonlight too
 // Wall atlas: 2 x 2 cells, one per painting; each cell holds its wall patch mirrored 2 x 2 so it tiles without seams.
 const ATLAS = 512, CELL = ATLAS / 2;
@@ -255,6 +257,7 @@ export function emitHouse(sink, h, x, z, rot = 0) {
     block(plain, T, sx, y0, sz, 1.3, top - y0, len, stackCol, wp, capCol);    // snow on the stack's top
     const pots = 2 + ((R() * 2) | 0);
     for (let p = 0; p < pots; p++) block(plain, T, sx, top, sz - len / 2 + (p + 0.5) * (len / pots), 0.42, 0.7 + R() * 0.35, 0.42, potCol, undefined, false);
+    stackTops.push([T.x + sx * T.c + sz * T.s, top + 1, T.z - sx * T.s + sz * T.c]);
   };
   const [left, right, rear] = h.stacks;
   if (left) stack(-hw + 0.65, (R() - 0.5) * 0.6);

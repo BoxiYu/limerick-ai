@@ -1,9 +1,9 @@
-// "Behind every window": the ninth stop. Mary's question about her fridge leaves her phone, goes up a phone mast,
+// "Behind every window": the ninth stop. Mary's question about her stew leaves her phone, goes up a phone mast,
 // travels as light through fibre to a data centre on the horizon, is worked out on chips, which run on electricity
 // from the grid and wind farms, and the answer comes all the way home. Six steps; → moves on.
 // Facts (no numbers on screen): fibre carries data as pulses of light; AI chips do very many small calculations at
 // the same time; data centres use a large share of Ireland's electricity (CSO release, July 2026: see FACTS2.json).
-import { THREE, scene, V } from './core.js';
+import { THREE, scene, V, reduced } from './core.js';
 
 const KITCHEN = V(38.6, 3.5, -98), MAST = V(62, 36, -92);
 // drawn above the rooftops so it can be seen (the real cables run underground: the labels say so)
@@ -56,13 +56,14 @@ function buildProps() {
     hub.rotation.x = Math.random() * 6; blades.push(hub);
     const l = glowSprite(0xff4a3a, 3); l.position.set(x, 63.5, z); g.add(l);
   }
-  // pylons along the power line
+  // pylons along the power line (their own group: they stand in the data-centre shot, so they wait for The power)
+  const pylons = new THREE.Group(); g.add(pylons);
   for (let k = 1; k < POWER.length - 1; k++) {
-    const p = POWER[k]; const py = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 1.4, 25, 4), dark); py.position.set(p.x, 12, p.z); g.add(py);
-    const arm = new THREE.Mesh(new THREE.BoxGeometry(10, 0.6, 0.6), dark); arm.position.set(p.x, 24, p.z); arm.lookAt(p.x + 1, 24, p.z + 1); g.add(arm);
+    const p = POWER[k]; const py = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 1.4, 25, 4), dark); py.position.set(p.x, 12, p.z); pylons.add(py);
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(10, 0.6, 0.6), dark); arm.position.set(p.x, 24, p.z); arm.lookAt(p.x + 1, 24, p.z + 1); pylons.add(arm);
   }
   scene.add(g);
-  return { g, blades };
+  return { g, blades, pylons };
 }
 
 // ---------- the chips: a full-screen 2D picture, zooming into one chip with its cores lighting up in waves ----------
@@ -87,7 +88,7 @@ function chipLayer(el) {
       g.fillStyle = `rgba(${40 + 103 * k},${70 + 163 * k},${100 + 155 * k},${0.35 + 0.65 * k})`;
       g.fillRect(x0 + i * c + 1, y0 + j * c + 1, c - 2, c - 2);
     }
-    t++; raf = requestAnimationFrame(draw);
+    t++; if (!reduced) raf = requestAnimationFrame(draw);   // reduced motion: one still picture of the chip
   };
   requestAnimationFrame(() => { wrap.classList.add('on'); draw(); });
   return { remove() { cancelAnimationFrame(raf); wrap.classList.remove('on'); setTimeout(() => wrap.remove(), 900); } };
@@ -95,20 +96,30 @@ function chipLayer(el) {
 
 export const JOURNEY_CSS = `
 #journey{position:fixed;inset:0;pointer-events:none;z-index:3}
-.jr-steps{position:absolute;left:50%;top:3%;transform:translateX(-50%);display:flex;gap:4px;margin:0;padding:6px;list-style:none;background:rgba(8,12,22,.78);
+.jr-steps{position:absolute;z-index:2;left:50%;top:3%;transform:translateX(-50%);display:flex;gap:4px;margin:0;padding:6px;list-style:none;background:rgba(8,12,22,.78);
   border-radius:999px;border:1px solid rgba(244,239,227,.18);white-space:nowrap;opacity:0;transition:opacity .6s}
 #journey.on .jr-steps{opacity:1}
-.jr-steps li{padding:.35em .85em;border-radius:999px;font:600 clamp(14px,1vw,20px) var(--sans);color:rgba(244,239,227,.45);transition:all .4s}
-.jr-steps li.on{background:rgba(143,233,255,.16);color:var(--cyan)}.jr-steps li.past{color:rgba(244,239,227,.8)}
+/* 24 px at 1080p, like the windows' strip; the stops still to come at .65 */
+.jr-steps li{padding:.35em .85em;border-radius:999px;font:600 clamp(14px,1.25vw,28px) var(--sans);color:rgba(244,239,227,.65);transition:all .4s}
+.jr-steps li.on{background:rgba(143,233,255,.16);color:var(--cyan)}.jr-steps li.past{color:rgba(244,239,227,.85)}
 .jr-steps li.home.on{background:rgba(255,198,90,.18);color:var(--amber)}
 .jr-label{z-index:1;position:absolute;left:max(4vw,20px);top:14%;max-width:min(560px,40vw);opacity:0;transform:translateY(10px);transition:opacity .7s,transform .7s}
 .jr-label.on{opacity:1;transform:none}
 .jr-label .ui-line{font:600 clamp(26px,2.4vw,46px)/1.15 var(--serif);margin:.15em 0 .3em}
-.jr-label .ui-src{font-size:clamp(16px,1.15vw,22px);line-height:1.4}
+.jr-label .ui-kicker{font-size:clamp(14px,1.25vw,28px)}.jr-label .ui-src{font-size:clamp(16px,1.25vw,28px);line-height:1.4}
 .jr-chip{position:absolute;inset:0;opacity:0;transform:scale(.25);transition:opacity .9s,transform 1.6s cubic-bezier(.65,0,.35,1)}
 .jr-chip.on{opacity:1;transform:none}
 .jr-chip canvas{width:100%;height:100%;display:block}
 .jr-chip-l{display:none;position:absolute;left:50%;bottom:6%;transform:translateX(-50%);margin:0;font:italic 500 clamp(18px,1.6vw,30px) var(--serif);color:var(--cyan);text-shadow:0 2px 8px #000;white-space:nowrap}
+/* upright screens and phones on their side (after the rules above, so these win): the strip wraps; on an upright phone
+   it takes two rows and the label card goes across the top under it (an upright tablet keeps the card at the left) */
+@media (max-aspect-ratio:1/1){.jr-steps{top:10px;flex-wrap:wrap;justify-content:center;width:max-content;max-width:calc(100vw - 16px);white-space:normal;border-radius:18px}}
+@media (max-aspect-ratio:1/1) and (max-width:600px){.jr-steps li{font-size:clamp(13px,3.9vw,14px);padding:.3em .6em}
+  .jr-label{left:12px;right:12px;top:96px;max-width:none}.jr-label .ui-line{font-size:24px}}
+@media (max-aspect-ratio:1/1) and (max-height:720px){.jr-label .ui-src{display:none}}
+@media (max-height:560px){.jr-label{top:58px}.jr-label .ui-src{display:none}}
+@media (max-height:380px){.jr-label .ui-line{font-size:22px}}   /* the label keeps 26 px where it fits (844x390); smaller phones on their side */
+@media (prefers-reduced-motion:reduce){.jr-steps,.jr-steps li,.jr-label,.jr-chip{transition:none}}
 `;
 
 /**
@@ -121,7 +132,7 @@ export function startJourney(el, api) {
   const out = startJourney.trails ||= { route: trail(ROUTE, 0x8fe9ff, 0.9), power: trail(POWER, 0xffc65a, 1.1) };
   for (const t of [out.route, out.power]) { if (!t.mesh.parent) scene.add(t.mesh); t.mat.uniforms.uP.value = 0; t.mat.uniforms.uDir.value = 1; t.mat.uniforms.uA.value = 1; t.mat.uniforms.uC.value.set(t === out.route ? 0x8fe9ff : 0xffc65a); }
   const head = startJourney.head ||= glowSprite(0x8fe9ff, 7); scene.add(head); head.visible = false;
-  props.g.visible = true; world.lm.datacentres?.show(true);
+  props.g.visible = true; props.pylons.visible = false; const dc = world.lm.datacentres; dc?.show(true);
   const fog = scene.fog.density; scene.fog.density = 0.0009;
 
   el.innerHTML = `<ol class="jr-steps">${['Her phone', 'The network', 'A data centre', 'The chips', 'The power', 'Back home'].map((s, k) => `<li class="${k === 5 ? 'home' : ''}">${s}</li>`).join('')}</ol>
@@ -136,11 +147,14 @@ export function startJourney(el, api) {
   }
   let stopped = false, busy = false, k = -1, chip = null, T = 0;
   const route = out.route, power = out.power;
+  // the horizon glow over the campus: full from afar (The network), fainter for the close shot
+  const hazeTo = (o, ms = 1500) => { const m = dc?.haze?.material; if (!m) return; const n = m.userData.n = (m.userData.n || 0) + 1, o0 = m.opacity; animate(ms, (e) => { if (n === m.userData.n) m.opacity = o0 + (o - o0) * e; }); };
   const run = (t, ms, from, to) => animate(ms, (e) => { t.mat.uniforms.uP.value = from + (to - from) * e; if (t === route) { head.position.copy(route.curve.getPointAt(Math.min(0.999, Math.max(0, t.mat.uniforms.uDir.value > 0 ? t.mat.uniforms.uP.value : 1 - t.mat.uniforms.uP.value)))); } });
   const SHOTS = [
     { pos: V(4, 16, -62), at: V(42, 10, -96) },
     { pos: V(-60, 170, 190), at: V(340, 0, -10) },
-    { pos: V(600, 60, 160), at: V(930, 8, 20) },
+    // close and low: two or three sheds fill the frame and the roof plant reads; an upright screen looks further down
+    innerWidth < innerHeight ? { pos: V(740, 70, 150), at: V(900, 4, 30) } : { pos: V(720, 50, 155), at: V(905, 8, 25) },
     null,
     { pos: V(1010, 70, 700), at: V(1220, 40, 430) },
     { pos: V(300, 150, 160), at: V(60, 10, -80) },
@@ -148,7 +162,7 @@ export function startJourney(el, api) {
   const STEPS = [
     async () => {
       fly(SHOTS[0], 3);
-      await show('Behind every window', 'Where does a question go?', 'Mary asked about her fridge. Let\'s follow her question.');
+      await show('Behind every window', 'Where does a question go?', 'Mary asked about a stew. Let\'s follow her question.');
       head.visible = true; head.material.color.set(0x8fe9ff);
       await run(route, 2600, 0, 0.1);
     },
@@ -158,23 +172,23 @@ export function startJourney(el, api) {
       await run(route, 5200, 0.1, 0.86);
     },
     async () => {
-      fly(SHOTS[2], 4.5);
-      await run(route, 2600, 0.86, 1);
-      await show('A data centre', 'Big, quiet buildings full of computers.', 'Often far from where we live. This one is illustrative.');
+      fly(SHOTS[2], 4.5); api.amb?.(0.16); hazeTo(0.22);   // the hum comes in as we arrive, under the narrator
+      await Promise.all([run(route, 2600, 0.86, 1), after(600).then(() => show('A data centre', 'Busy buildings, humming with cooling fans day and night.', 'Often far from where we live. This one is illustrative.'))]);
     },
     async () => {
+      api.amb?.(0.06);
       await show('The chips', 'Very many small sums, all at the same time.', 'Special chips work out the answer in a second or two.');
       chip = chipLayer(el);
     },
     async () => {
-      chip?.remove(); chip = null;
+      chip?.remove(); chip = null; api.amb?.(0); hazeTo(0.42);
       fly(SHOTS[4], 4.5);
       await show('The power', 'All of it runs on electricity.', 'From wind farms and power stations, through the grid. Data centres use a large share of Ireland\'s electricity: a real cost, worth knowing.');
       await run(power, 4200, 0, 1);
     },
     async () => {
       fly(SHOTS[5], 6);
-      await show('Back home', 'And the answer comes all the way back.', '"Leek and potato soup." In a second or two, to a kitchen in Limerick.');
+      await show('Back home', 'And the answer comes all the way back.', '"Step 1: slice the onions and carrots." In a second or two, to a kitchen in Limerick.');
       route.mat.uniforms.uC.value.set(0xffc65a); head.material.color.set(0xffc65a); route.mat.uniforms.uDir.value = -1;
       await run(route, 5000, 0, 1);
       api.setLit('kitchen', 2.2); await after(900); api.setLit('kitchen', 1.35);
@@ -183,7 +197,7 @@ export function startJourney(el, api) {
   async function next() {
     if (busy || stopped) return;
     if (k === STEPS.length - 1) { stop(); api.onDone(); return; }
-    busy = true; k++; mark(k);
+    busy = true; k++; mark(k); props.pylons.visible = k >= 4;
     api.say(`limerick/assets/voice/journey${k}.mp3`, api.NARRATION[`journey${k}`]);
     await STEPS[k]();
     busy = false;
@@ -191,11 +205,13 @@ export function startJourney(el, api) {
   function stop() {
     if (stopped) return; stopped = true;
     chip?.remove(); el.classList.remove('on'); setTimeout(() => { if (stopped) el.innerHTML = ''; }, 700);
-    props.g.visible = false; world.lm.datacentres?.show(false); head.visible = false;
+    props.g.visible = false; dc?.show(false); head.visible = false; api.amb?.(0); hazeTo(0.42, 1);
     for (const t of [route, power]) scene.remove(t.mesh);
     scene.fog.density = fog;
   }
   function update(dt) {
+    dc?.update?.(dt);   // the vapour over the roof plant (it holds still under reduced motion itself)
+    if (reduced) return;   // reduced motion: the pulses and the wind turbines hold still
     T += dt; route.mat.uniforms.uT.value = T; power.mat.uniforms.uT.value = T;
     for (const b of props.blades) b.rotation.x += dt * 0.9;
   }

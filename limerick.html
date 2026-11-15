@@ -9,19 +9,24 @@
   <link rel="stylesheet" href="limerick.css">
   <style>
     /* hotspot: a soft cyan ring with an amber label; visited places turn amber */
-    .spot{position:fixed;left:0;top:0;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:10px;
+    .spot{position:fixed;left:0;top:0;transform:translate(-50%,-50%);display:flex;
       background:none;border:0;padding:0;cursor:pointer;color:var(--ink);font:inherit;transition:opacity .5s}
-    .spot i{width:40px;height:40px;border-radius:50%;border:2px solid var(--cyan);box-shadow:0 0 18px rgba(143,233,255,.45);position:relative}
-    .spot i::after{content:"";position:absolute;inset:-2px;border-radius:50%;border:2px solid var(--cyan);animation:ping 2.4s ease-out infinite}
+    .spot i{width:40px;height:40px;border-radius:50%;border:2px solid var(--cyan);box-shadow:0 0 18px rgba(143,233,255,.18);position:relative}
+    /* the ping only shows: a tap on it reaches what is under it, not this spot */
+    .spot i::after{content:"";position:absolute;inset:-2px;border-radius:50%;border:2px solid var(--cyan);animation:ping 2.4s ease-out infinite;filter:opacity(.4);pointer-events:none}
     @keyframes ping{from{transform:scale(1);opacity:.8}to{transform:scale(2.1);opacity:0}}
-    .spot .ui-chip{transition:transform .3s,border-color .3s;font-size:clamp(16px,1.1vw,24px)}
+    /* one hero glow (DESIGN.md): only the window → opens next pings and glows in full; the others at 40% */
+    .spot.next i{box-shadow:0 0 18px rgba(143,233,255,.45)}.spot.next i::after{filter:none}
+    /* the label hangs under its ring on one line; placeSpots() slides it (--dx, --dy) off other rings and labels, and keeps it on screen */
+    .spot .ui-chip{position:absolute;left:50%;top:calc(100% + 10px);transform:translateX(-50%);translate:var(--dx,0) var(--dy,0);white-space:nowrap;
+      transition:transform .3s,border-color .3s;font-size:clamp(18px,1.25vw,28px)}
     .spot .ui-chip small{font:700 .8em var(--sans);opacity:.75}
-    .spot:hover .ui-chip,.spot:focus-visible .ui-chip{transform:scale(1.08)}
-    .spot.visited i,.spot.visited i::after{border-color:var(--amber);box-shadow:0 0 18px rgba(255,198,90,.5)}
+    .spot:hover .ui-chip,.spot:focus-visible .ui-chip{transform:translateX(-50%) scale(1.08)}
+    .spot.visited i,.spot.visited i::after{border-color:var(--amber);box-shadow:0 0 18px rgba(255,198,90,.2)}
     .spot.visited i::after{animation:none;opacity:0}
     .spot.off{opacity:0;pointer-events:none}
     .spot:focus{outline:none}.spot:focus-visible i{outline:2px solid var(--amber);outline-offset:6px}
-    @media (prefers-reduced-motion:reduce){.spot i::after{animation:none}}
+    @media (prefers-reduced-motion:reduce){.spot i::after{animation:none}.spot .ui-chip{transition:none}}
 
     /* portal: starts as the lit window, grows to full screen, then hands over to the video */
     #portal{position:fixed;left:0;top:0;width:0;height:0;overflow:hidden;opacity:0;pointer-events:none;z-index:3;background:#05080f;
@@ -35,31 +40,73 @@
     /* no video yet: a slow push-in on the still so the picture still feels alive */
     #portal.kb img{animation:kb 14s ease-out forwards}
     @keyframes kb{from{transform:scale(1)}to{transform:scale(1.08)}}
-    @media (prefers-reduced-motion:reduce){#portal.kb img{animation:none}}
+    @media (prefers-reduced-motion:reduce){#portal.kb img{animation:none}#portal.grow{transition:opacity .5s}}   /* the window opens without the zoom */
 
     /* narration caption: above the card position, big and calm */
     #cap{z-index:4;opacity:0;bottom:max(6vh,30px);font-size:clamp(24px,2.2vw,42px)}
     #cap.on{opacity:1}
+    #cap,#hint{pointer-events:none}   /* words to read, never in the way of a ring or a window label below them */
     .nocap #cap{opacity:0!important}
+    #hint{position:fixed;left:50%;bottom:max(5vh,28px);transform:translateX(-50%);margin:0;font:italic 500 clamp(22px,2vw,36px) var(--serif);
+      text-shadow:0 2px 8px #000;transition:opacity .6s;text-align:center;width:min(1100px,90vw)}
+    #hint.out{opacity:0}
+    /* phones and touch screens: the caption on a dark plate that hugs its words, so it reads over a busy painting */
+    @media (hover:none) and (pointer:coarse),(max-width:600px),(max-height:560px){
+      #cap{width:max-content;max-width:min(1200px,90vw);padding:.2em .55em;border-radius:14px;background:rgba(8,12,22,.8)}#cap::before{display:none}
+      body:has(#try.on>.tp-chat.has) #cap{opacity:0}}   /* sound off, the whole scene-setting text gives way once the conversation (which it would cover) begins */
+    /* phones: over the city the caption sits up in the sky, off the window labels along the river */
+    @media (max-width:600px){#cap{max-width:calc(100vw - 20px)}}
+    /* the narrowest phones: smaller caption words, so the opening (sound off) stays up in the sky above the window labels
+       and a scene's whole text clears the journey's label card (18px at 320 wide, 20px from 360) */
+    @media (max-width:380px){#cap{font-size:clamp(18px,5.6vw,20px)}}
+    @media (max-width:600px),(max-height:560px){#cap.city{top:12px;bottom:auto}}
+    @media (max-height:560px){#hint.city{top:12px;bottom:auto}}   /* on its side the labels reach the bottom too: the hint goes up as well */
 
     #card{position:fixed;left:50%;bottom:max(7vh,36px);transform:translate(-50%,12px);opacity:0;transition:opacity .8s,transform .8s;z-index:4;
       max-width:min(900px,88vw);pointer-events:none}
     #card.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+    @media (prefers-reduced-motion:reduce){#card{transition:opacity .8s}}
     #card .ui-line{font-family:var(--serif);font-size:clamp(28px,2.6vw,48px)}
+    #card .ui-kicker{font-size:clamp(14px,1.25vw,28px)}
     #card .ui-src{display:flex;justify-content:space-between;gap:24px;font-size:clamp(16px,1vw,20px)}
     #card button{background:none;border:0;color:var(--amber);font:inherit;cursor:pointer;padding:0;white-space:nowrap}
-
-    #hint{position:fixed;left:50%;bottom:max(5vh,28px);transform:translateX(-50%);margin:0;font:italic 500 clamp(22px,2vw,36px) var(--serif);
-      text-shadow:0 2px 8px #000;transition:opacity .6s;text-align:center;width:min(1100px,90vw)}
-    #hint.out{opacity:0}
+    #card.ui-card{background:rgba(8,12,22,.9)}   /* the line to remember reads on its own, not through the painting */
+    #try.carded .tp-fx{opacity:.3;transition:opacity .8s}   /* what the AI noticed steps back behind the card */
+    #card{left:var(--card-x,50%);max-height:calc(100vh - max(7vh,36px) - 12px);overflow-y:auto;overscroll-behavior:contain}
+    @media (max-width:600px){#card{bottom:12px;width:calc(100vw - 24px);max-width:none;max-height:calc(100vh - 24px)}
+      #card .ui-line{font-size:24px}#card .ui-src{flex-direction:column;align-items:flex-start;gap:10px}}
+    @media (max-height:560px){#card{bottom:12px;max-height:calc(100vh - 24px)}#card .ui-line{font-size:22px}}
+    /* a phone on its side: the card's gaps close up (same words, same sizes), so at 844x390 every card fits whole */
+    @media (max-height:400px) and (min-aspect-ratio:1/1){#card.ui-card{padding-top:10px;padding-bottom:12px}#card .ui-kicker{margin-bottom:.3em}
+      #card .ui-line{line-height:1.25;margin-top:.15em}#card.ui-card .ui-try{margin-top:.5em;padding-top:.5em}#card .try-label{margin-bottom:.3em}
+      #card .try-first{margin-top:.35em;line-height:1.3}#card .try-terms{margin-top:.2em;line-height:1.3}#card .how-go{margin-top:.5em}#card .ui-src{margin-top:.5em}}
+    /* a card still taller than the screen (a small phone on its side): it scrolls under its end, so "Show me how" and
+       "Back to the city" stay in view (placeCard() sets .scrolls; the card's bottom padding moves onto that end) */
+    #card.scrolls{padding-bottom:0}
+    #card.scrolls .card-end{position:sticky;bottom:0;margin:.2em calc(-1 * clamp(16px,1.6vw,30px)) 0;padding:.6em clamp(16px,1.6vw,30px) clamp(14px,1.4vw,26px);
+      background:linear-gradient(rgba(8,12,22,0),rgb(8,12,22) .6em)}   /* across the card's full width, out to its border */
+    #card.scrolls .card-how .how-go{margin-top:0}#card.scrolls .ui-src{margin-top:.5em}
+    /* touch screens have no → key: one button moves the talk on where nothing else on screen does (the city, inside a
+       window, the journey, the finale; a window's card has its own "Back to the city"). Dim while the conversation is busy. */
+    #touch-next{display:none}
+    @media (hover:none) and (pointer:coarse){
+      #touch-next{display:block;position:fixed;left:50%;bottom:max(14px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:5;min-height:48px;padding:.55em 1.4em;
+        border-radius:999px;border:0;background:var(--amber);color:#1a1206;font:800 18px var(--sans);cursor:pointer;opacity:0;pointer-events:none;transition:opacity .4s}
+      #touch-next.on{opacity:1;pointer-events:auto}#touch-next.on.wait{opacity:.4}
+      #cap,#hint{bottom:calc(max(6vh,30px) + 58px)}   /* above the Next button (after the base #hint rule, so it wins) */
+      #card #back{padding:12px 0;margin:-12px 0}}   /* a finger-sized target, same layout */
+    .touch-only{display:none}
+    @media (hover:none) and (pointer:coarse){.touch-only{display:inline}.key-only{display:none}}
+    /* phones: the window names as numbers, so eight of them fit across the river */
+    @media (max-width:600px),(max-height:560px){.spot .ui-chip{font-size:0;gap:0;padding:.35em .6em}.spot .ui-chip small{font-size:15px;opacity:1}.spot i{width:32px;height:32px}}
 
     /* title and closing line */
     .stage{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:5vh 6vw;
       pointer-events:none;transition:opacity 1.4s ease;background:radial-gradient(55% 45% at 50% 48%,rgba(3,6,14,.62),transparent)}
-    .stage .kicker{font:700 clamp(15px,1.1vw,20px) var(--sans);letter-spacing:.22em;text-transform:uppercase;color:var(--soft);margin:0}
+    .stage .kicker{font:700 clamp(16px,1.25vw,28px) var(--sans);letter-spacing:.22em;text-transform:uppercase;color:var(--soft);margin:0}
     .stage h1{font:600 clamp(48px,7vw,124px)/1.02 var(--serif);margin:.12em 0 .2em;text-shadow:0 4px 40px rgba(0,0,0,.8)}
     .stage .sub{font:italic 400 clamp(24px,2.5vw,44px) var(--serif);color:var(--amber);margin:0}
-    .stage .by{font:500 clamp(17px,1.2vw,24px) var(--sans);color:var(--soft);margin:1.6em 0 0}
+    .stage .by{font:500 clamp(18px,1.35vw,30px) var(--sans);color:var(--soft);margin:1.6em 0 0}
     #title.out{opacity:0}
     #title.out .start{pointer-events:none}
     /* the start button: the one thing to press when the page opens */
@@ -69,17 +116,39 @@
     .start:hover{transform:scale(1.05)}
     .start:focus-visible{outline:3px solid var(--ink);outline-offset:4px}
     .start-dot{width:.7em;height:.7em;border-radius:50%;background:#1a1206;clip-path:polygon(15% 0,100% 50%,15% 100%)}
-    .start-note{margin:1em 0 0;font:500 clamp(15px,1.05vw,20px) var(--sans);color:var(--soft)}
+    .start-note{margin:1em 0 0;font:500 clamp(16px,1.25vw,28px) var(--sans);color:var(--soft)}
     @keyframes startpulse{0%{box-shadow:0 0 0 0 rgba(255,198,90,.55),0 10px 40px rgba(255,198,90,.35)}100%{box-shadow:0 0 0 22px rgba(255,198,90,0),0 10px 40px rgba(255,198,90,.35)}}
     @media (prefers-reduced-motion:reduce){.start{animation:none}}
     #closing{opacity:0}
     #closing.on{opacity:1}
     #closing h1{font-size:clamp(44px,6vw,108px)}
-    .stage .by.made{font-size:clamp(15px,1vw,19px);margin-top:.8em;opacity:.8}
+    /* the closing's small lines on a dark plate, so they read over the lit roofs from the back row; credits about 68 characters a line */
+    #closing .end{margin:1.4em 0 0;max-width:100%;background:rgba(8,12,22,.86);text-align:center}
+    #closing .end .by{margin:0;color:var(--ink)}
+    #closing .end .made{font-size:clamp(18px,1.05vw,22px);line-height:1.45;color:var(--soft);max-width:68ch;margin:.7em auto 0}
+    /* phones: smaller words, the closing kept above the lower fifth (caption, hint, Next), and the plate waits while a caption covers it */
+    @media (max-width:600px),(max-height:560px){#closing{padding-bottom:20vh}#closing .end{margin-top:.8em;padding:12px 14px;transition:opacity .6s}
+      #closing .end .by{font-size:16px}#closing .end .made{font-size:15px;margin-top:.5em}body:has(#cap.on) #closing .end{opacity:0}}
+    /* touch phones, at the end: the hint just above Next, and the closing words kept clear of both
+       (the hint takes one line on a phone on its side, two upright) */
+    @media (hover:none) and (pointer:coarse) and (max-width:600px),(hover:none) and (pointer:coarse) and (max-height:560px){
+      #hint.end{bottom:calc(max(14px,env(safe-area-inset-bottom)) + 56px);line-height:1.2}
+      #closing{padding-top:10px;padding-bottom:calc(max(14px,env(safe-area-inset-bottom)) + 92px);justify-content:safe center}   /* too tall: the title stays on screen */
+      #closing .end .made{line-height:1.35}}
+    @media (hover:none) and (pointer:coarse) and (max-width:600px){#closing{padding-bottom:max(20vh,calc(max(14px,env(safe-area-inset-bottom)) + 118px))}}
+    /* a small phone on its side (568×320, 640×360): a smaller headline and a wider, tighter plate, so every closing word,
+       the hint and Next all fit on the screen */
+    @media (max-height:370px) and (min-aspect-ratio:1/1){#closing{padding-left:12px;padding-right:12px}#closing h1{font-size:32px;margin:.1em 0 .15em}
+      #closing .end{margin-top:.4em;padding:8px 12px}#closing .end .made{line-height:1.25;margin-top:.35em}}
     .blackout #howto,.blackout #apps{opacity:0!important}
     .hide-ui #try,.hide-ui #apps,.hide-ui #howto,.hide-ui .stage,.hide-ui #card,.hide-ui #hint,.hide-ui #spots,.hide-ui #cap{opacity:0!important}
     #try{opacity:0;transition:opacity .5s}#try.on{opacity:1}
-    #try.carded .tp-chat{max-height:46%}#try.carded .tp-steps{opacity:.0}
+    /* the weather's sun, warming once as the narrator says "looks bright" (explore.js swell(); none under reduced motion) */
+    .swell{position:fixed;z-index:3;pointer-events:none;border-radius:50%;opacity:0;mix-blend-mode:screen;transform:scale(1.9);   /* a soft halo past the sun's rays */
+      background:radial-gradient(closest-side,rgba(255,236,170,.75),rgba(255,214,120,.45) 35%,rgba(255,198,90,.15) 65%,rgba(255,198,90,0));animation:swell 2.6s ease-in-out}
+    @keyframes swell{50%{opacity:1}}
+    #try.carded .tp-steps{opacity:.0}   /* the chat keeps its height: placeCard() puts the card beside it, so the last word (theirs) stays in view */
+    #notes-h{margin-right:24px}   /* the notes' heading wraps before the close × in the corner */
     #check-out{position:fixed;inset:auto 0 0 0;max-height:40vh;overflow:auto;background:#000;color:#9f9;font:12px var(--mono);z-index:9;margin:0}
   </style>
   <script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js","three/addons/":"./node_modules/three/examples/jsm/"}}</script>
@@ -94,17 +163,20 @@
     <p class="sub">Eight windows. One evening. AI, quietly helping.</p>
     <p class="by">Dr Boxi Yu · Lero, University of Limerick</p>
     <button type="button" id="start" class="start"><span class="start-dot" aria-hidden="true"></span>Click to begin</button>
-    <p class="start-note">Turn your sound on · it opens in full screen · press → to go on</p>
+    <p class="start-note">Turn your sound on · it opens in full screen<span class="key-only"> · press → to go on</span><span class="touch-only"> · tap Next to go on</span></p>
   </section>
   <section id="closing" class="stage" aria-live="polite">
     <p class="kicker">Eight windows, one winter's night</p>
     <h1>Let it help.<br>But you decide.</h1>
+    <div class="ui-card end">
     <p class="by">Free help to start: AIReady.ie · ask at the desk on your way out</p>
     <p class="by made">The pictures were made with AI (Nano Banana Pro), and the narration is my own voice, cloned with ElevenLabs. The conversations are prepared examples. Robin song: Jan Cibulka, xeno-canto XC441752, CC BY-SA 4.0.</p>
+    </div>
   </section>
   <section id="apps" aria-label="The apps from tonight, to try at home"></section>
   <div id="howto" class="how" aria-live="polite"></div>
   <p id="hint" class="out"></p>
+  <button type="button" id="touch-next">Next →</button>
   <div id="portal" aria-hidden="true">
     <img alt="">
     <video playsinline preload="auto"></video>
@@ -116,7 +188,7 @@
     <p class="ui-kicker"></p>
     <p class="ui-line"></p>
     <div class="ui-try"></div>
-    <p class="ui-src"><span></span><button type="button" id="back">Back to the city · ←</button></p>
+    <div class="card-end"><div class="card-how"></div><p class="ui-src"><span></span><button type="button" id="back">Back to the city<span class="key-only"> · ←</span></button></p></div>
   </div>
   <div id="fade" aria-hidden="true"></div>
   <div id="black" aria-hidden="true"></div>
