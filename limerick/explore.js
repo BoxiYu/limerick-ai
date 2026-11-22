@@ -392,7 +392,8 @@ async function intro() {
   // first press: the title gives way, the narrator sets the scene over the city
   if (state !== 'intro') return;
   hideIntro(); state = 'city';
-  fly({ pos: V(-120, 92, 250), at: V(10, 4, 40) }, 9);
+  // a slow push in that still frames all eight windows (window 8, nearest the camera, was off the right edge before)
+  fly({ pos: V(-138, 114, 298), at: V(9, 2, 105) }, 9);
   const my = token;
   const spoke = await say('limerick/assets/voice/intro.mp3', NARRATION.intro);
   if (!spoke && my === token) await after(6000);            // no narrator: leave the caption up long enough to read
