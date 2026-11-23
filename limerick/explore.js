@@ -602,6 +602,20 @@ if (Q.has('shot')) {
   }
   for (let i = 0; i < 160; i++) tick(0.05, false);
 }
+// ?video: the recorded film plays its extra narrator lines (NARRATION.md video_*) at chosen beats, captions in step
+if (Q.has('video')) {
+  window.__line = (id) => say(`limerick/assets/voice/${id}.mp3`, NARRATION[id]);
+  // nobody is in the room: no button to click on the title, no desk to ask at on the closing card
+  for (const el of document.querySelectorAll('#start, #title .start-note')) el.style.visibility = 'hidden';
+  $('#closing .by').textContent = 'Free help to start: AIReady.ie';
+  board.querySelector('.apps-qr p').lastChild.textContent = 'Free to start';
+  // the site's QR, in the bottom-left corner the whole film; it steps aside for a window's card and the board (which has its own)
+  document.body.insertAdjacentHTML('beforeend', `<div id="vqr"><img src="limerick/assets/qr-try.svg" alt=""><span>Scan to explore<br>it yourself</span></div>
+<style>#vqr{position:fixed;left:22px;bottom:22px;z-index:50;padding:8px 8px 6px;background:#fff;border-radius:10px;text-align:center;
+box-shadow:0 2px 14px rgba(0,0,0,.35);transition:opacity .6s}#vqr img{display:block;width:112px;height:112px}
+#vqr span{display:block;margin-top:4px;color:#1d2433;font:600 11.5px/1.25 var(--sans,system-ui)}
+body:has(#card.on, #apps.on) #vqr{opacity:0}</style>`);
+}
 window.__booted = true;
 requestAnimationFrame(() => { $('#loading').classList.add('gone'); clock.getDelta(); frame(); });
 

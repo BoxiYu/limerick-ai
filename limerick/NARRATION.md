@@ -5,6 +5,8 @@ Window claims match `limerick/FACTS5.json`; the journey's electricity line rests
 No statistics. The narrator sets the scene and stops; the conversation on screen shows what happens. Keep the narrator's
 English plain: Irish turns of phrase belong to the people in the bubbles, not to the narrator.
 To re-record one clip, edit its text here and run `tools/voice.sh <id>`.
+The `video_*` clips are only for the recorded film of the talk (`limerick.html?video`, see `VIDEO-LINES.md`): they fill
+the stretches where Boxi would talk through each conversation in the room. The live talk never plays them.
 
 ## intro
 A winter's night in Limerick, a few weeks before Christmas. Behind these windows, people are doing ordinary things: cooking, learning, remembering, keeping in touch. And quietly, AI is helping. Let's look inside.
@@ -53,3 +55,66 @@ And then the answer comes all the way back, to a kitchen in Limerick. A stew, on
 
 ## finale
 Eight windows, one winter's night. None of it is magic, and none of it replaces us. It helps us cook, learn, remember, and stay close. Let it help. But you decide.
+
+## video_kitchen1
+Watch the strip along the top. Four steps: you ask, it looks, it answers, and you decide.
+
+## video_kitchen2
+Notice it says "what looks like lamb". It can't be sure from a photo, so check what it tells you.
+
+## video_kitchen3
+You have to ask for the pictures, and each one takes a little while. These ones were drawn with AI for tonight.
+
+## video_kitchen4
+And the last word is hers: her mother's way.
+
+## video_nature1
+Listen first. Who is singing out there in the dark?
+
+## video_nature2
+A free app, made by bird scientists, listens through the phone and suggests which bird it is. It isn't always right, but it makes a walk more interesting. Robins sing right through the Irish winter, and near a light they'll sing at night.
+
+## video_library1
+That answer is right, but it's full of jargon. So she asks again.
+
+## video_library2
+Simpler. Now she asks for an example.
+
+## video_library3
+Ask it as often as you like. For free help getting started, there's the AI Ready website, and the Age-Friendly AI programme coming to libraries.
+
+## video_travel1
+Practise at home before you go: take a photo of a menu, and ask what it says in English.
+
+## video_travel2
+Most of it reads well. But one dish comes out a bit odd.
+
+## video_travel3
+Saltimbocca really does mean "jumps in the mouth", so ask about anything you're not sure of. It needs the internet, so use the Wi-Fi, or check your data abroad.
+
+## video_photos1
+No chat here, and nothing to ask. It's built into the photos app: just type what's in the picture.
+
+## video_photos2
+A dog, the beach, a birthday cake. Years of photos, and you can find the one you want.
+
+## video_card1
+She takes a photo of the card, and asks it to read it to her.
+
+## video_card2
+It reads out the words and describes the picture. Very loopy handwriting can trip it up. But she doesn't have to wait for someone to come and read it to her. If your eyes are poor, Be My Eyes is a free app made just for this.
+
+## video_verse1
+The first try is a bit soppy. So she asks again, and tells it what she wants.
+
+## video_verse2
+Then she adds the line only she could write.
+
+## video_weather1
+Some of this help you never see, so there's no phone in this window. On the sofa it's simple: tomorrow looks bright, so the wellies come out.
+
+## video_privacy
+One thing to remember. What you give these apps goes to the company that runs them, so share what you'd be happy to put on a postcard. The apps tonight are examples, and there are others.
+
+## video_board
+Here they all are, to try at home. Scan the code, and have a look for yourself. Happy Christmas.
