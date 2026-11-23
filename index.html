@@ -59,7 +59,8 @@
     .hero h1{margin:.2em 0 .2em}
     .ways{display:grid;grid-template-columns:1.65fr 1fr;gap:14px;margin-top:18px}
     .film{grid-row:span 2;margin:0;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
-    .film video{display:block;width:100%;aspect-ratio:16/9;background:#05080f}
+    .film iframe{display:block;width:100%;aspect-ratio:16/9;border:0;background:#05080f}
+    .film .way-d a{color:var(--amber);font-weight:700}
     .film figcaption,.way{padding:12px 16px 14px}
     .way-n{display:block;font:600 22px/1.2 var(--serif);color:var(--ink)}
     .way-d{display:block;margin-top:4px;color:var(--soft);font-size:16px}
@@ -93,8 +94,8 @@
       <h1>A Winter's Night <em>in Limerick</em></h1>
       <p class="lede">Eight windows, one evening, and AI quietly helping with ordinary things. Watch the talk, explore it yourself, then try the free apps at home.</p>
       <div class="ways">
-        <figure class="film"><video controls preload="metadata" playsinline poster="limerick/assets/film/poster.jpg" src="limerick/assets/film/ai-for-all-limerick-720p.mp4"></video>
-          <figcaption><span class="way-n">Watch the talk</span><span class="way-d">About 14 minutes, with sound and captions. Press play, and full screen if you like.</span></figcaption></figure>
+        <figure class="film"><iframe src="https://www.youtube-nocookie.com/embed/HEPf_z7Jm-s?rel=0&amp;playsinline=1" title="A Winter's Night in Limerick: the whole talk (video)" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" loading="lazy"></iframe>
+          <figcaption><span class="way-n">Watch the talk</span><span class="way-d">About 14 minutes, with sound and captions. Press play, and full screen if you like. Or <a href="https://www.youtube.com/watch?v=HEPf_z7Jm-s" target="_blank" rel="noopener">watch it on YouTube</a>.</span></figcaption></figure>
         <a class="way" href="limerick.html" style="--bg:url(limerick/assets/try/kitchen.jpg)"><span class="way-n">Explore it yourself</span><span class="way-d">Open each of the eight windows at your own pace. Best on a computer or tablet, sound on.</span></a>
         <a class="way down" href="#try" style="--bg:url(limerick/assets/try/card.jpg)"><span class="way-n">Try the apps</span><span class="way-d">The free apps behind each window, a link to each, and "Show me how".</span></a>
       </div>
