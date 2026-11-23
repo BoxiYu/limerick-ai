@@ -81,10 +81,20 @@ const icon = (name, cls = 'app-ic') => (ICONS[name] ? `<img class="${cls}" src="
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-/** The app names as chips; a window with nothing to install says so. */
-export function chipsHTML(t) {
+/** Each app's own official page (checked 23 Nov 2026), so the home page can send people straight there. Apple Photos is
+ *  already on every iPhone: Apple's own guide to searching it. Only try.html links the chips; the talk's board does not. */
+export const LINKS = { 'ChatGPT': 'https://chatgpt.com/', 'Google Gemini': 'https://gemini.google.com/', 'Microsoft Copilot': 'https://copilot.microsoft.com/',
+  'Claude': 'https://claude.ai/', 'Merlin Bird ID': 'https://merlin.allaboutbirds.org/', 'Google Photos': 'https://www.google.com/photos/about/',
+  'Apple Photos': 'https://support.apple.com/guide/iphone/search-for-photos-and-videos-iph392d77d5f/ios', 'Be My Eyes': 'https://www.bemyeyes.com/',
+  'Pl@ntNet': 'https://plantnet.org/', 'Google Lens': 'https://lens.google/', 'Met Éireann': 'https://www.met.ie/',
+  'AIReady.ie': 'https://www.aiready.ie/', 'Age-Friendly AI': 'https://www.adaptcentre.ie/projects/age-friendly-ai/' };
+
+/** The app names as chips; a window with nothing to install says so. With links, each chip opens the app's own page. */
+export function chipsHTML(t, links = false) {
   if (!t.apps.length) return `<span class="app-chip none">${esc(t.none)}</span>`;
-  return t.apps.map((a) => `<span class="app-chip">${icon(a)}${esc(a)}</span>`).join('');
+  return t.apps.map((a) => (links && LINKS[a]
+    ? `<a class="app-chip" href="${LINKS[a]}" target="_blank" rel="noopener">${icon(a)}${esc(a)}<span class="ext" aria-hidden="true">↗</span></a>`
+    : `<span class="app-chip">${icon(a)}${esc(a)}</span>`)).join('');
 }
 
 /** A line of text with the icon set just before each app name in it (the words stay as written). */
